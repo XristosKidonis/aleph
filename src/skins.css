@@ -50,6 +50,7 @@
 }
 
 /* cabecera */
+:root[data-skin="imprenta"] .marca .marca-logo { height: 32px; transform: translateY(4px); } /* la apilada no toca el marco */
 :root[data-skin="imprenta"] .cab-link { font: 500 11px var(--f-ui); letter-spacing: 0.09em; text-transform: uppercase; color: var(--tinta-2); }
 :root[data-skin="imprenta"] .cab-link.activa::after { height: 2px; bottom: 6px; }
 :root[data-skin="imprenta"] .sobretitulo, :root[data-skin="imprenta"] .cap-sobre { letter-spacing: 0.12em; color: var(--tinta-2); }
@@ -61,8 +62,6 @@
 :root[data-skin="imprenta"] .inicio-centro { width: 100%; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); grid-template-rows: auto 1fr auto auto; column-gap: clamp(28px, 4vw, 70px); align-items: start; }
 :root[data-skin="imprenta"] .inicio-edicion { display: none; }
 :root[data-skin="imprenta"] .inicio .marca-grande { grid-column: 1; grid-row: 1; margin: 0; align-items: flex-start; text-align: left; gap: 0; }
-:root[data-skin]:is([data-skin="imprenta"], [data-skin="editorial"]) .marca-grande .marca-apilada { display: none; }
-:root[data-skin]:is([data-skin="imprenta"], [data-skin="editorial"]) .marca-grande .marca-horizontal { display: block; height: clamp(52px, min(11vw, 15vh), 150px); }
 :root[data-skin="imprenta"] .inicio .marca-grande .marca-horizontal { height: auto; width: 100%; max-height: 40vh; }
 :root[data-skin="imprenta"] .inicio-entradas { grid-column: 2; grid-row: 1; width: 100%; gap: 0; border-top: 1px solid var(--tinta); }
 :root[data-skin="imprenta"] .inicio-entrada { grid-template-columns: 54px minmax(0, 1fr) 22px; padding: 9px 0 7px; border-bottom: 1px solid var(--tinta); font-size: clamp(28px, min(3.3vw, 5.2vh), 48px); line-height: 1.02; }

@@ -123,8 +123,8 @@ await paso('bienvenida: en Blanco, «hola» en varios idiomas, pide el nombre y 
 await paso('inicio con la marca nítida, cinco entradas y biblioteca de 66 libros', async () => {
   await pag.waitForSelector('.inicio .marca-grande');
   // la marca Aleph es el vector (alef + ALEPH), sin filtros y con tamaño real
-  const estilo = await pag.evaluate(() => { const g = document.querySelector('.marca-grande'); const l = g.querySelector('.marca-apilada'); return [getComputedStyle(l).filter, g.getAttribute('aria-label'), l.querySelectorAll('path').length, Math.round(l.getBoundingClientRect().width)]; });
-  if (estilo[0] !== 'none' || estilo[1] !== 'Aleph' || estilo[2] !== 2 || estilo[3] < 120) throw new Error(estilo.join(' | '));
+  const estilo = await pag.evaluate(() => { const g = document.querySelector('.marca-grande'); const l = g.querySelector('.marca-horizontal'); return [getComputedStyle(l).filter, g.getAttribute('aria-label'), l.querySelectorAll('path').length, Math.round(l.getBoundingClientRect().width)]; });
+  if (estilo[0] !== 'none' || estilo[1] !== 'Aleph' || estilo[2] !== 2 || estilo[3] < 150) throw new Error(estilo.join(' | '));
   if ((await pag.locator('.inicio-entrada').count()) !== 5) throw new Error('el inicio no tiene cinco entradas');
   if (await pag.locator('.inicio img:not(.inicio-cultura img)').count()) throw new Error('foto en el inicio');
   const sugerencia = await pag.locator('.inicio-empezar button').textContent();

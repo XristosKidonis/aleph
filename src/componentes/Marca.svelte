@@ -1,7 +1,6 @@
 <script>
   // Marca Aleph: la alef + ALEPH del tablero del dueño, en vector y en el color de la tinta. Sin filtros, sombras
-  // ni texturas. La normal (cabecera) es horizontal. La «grande» (Inicio y arranque) trae los dos armados: apilada
-  // en Blanco y horizontal en Imprenta y Editorial; cuál se ve lo decide skins.css.
+  // ni texturas. La «grande» (Inicio y arranque) es horizontal; la de la cabecera, apilada (elección del dueño).
   import { ALEF, PALABRA, HORIZONTAL, APILADA } from '../lib/marcaAleph.js';
   let { grande = false } = $props();
   const pieza = ([x, y, esc]) => `translate(${x} ${y}) scale(${esc})`;
@@ -16,9 +15,8 @@
 
 {#if grande}
   <div class="marca-grande" role="img" aria-label="Aleph">
-    {@render armado(APILADA, 'marca-apilada')}
     {@render armado(HORIZONTAL, 'marca-horizontal')}
   </div>
 {:else}
-  <span class="marca" aria-hidden="true">{@render armado(HORIZONTAL, 'marca-horizontal')}</span>
+  <span class="marca" aria-hidden="true">{@render armado(APILADA, 'marca-apilada')}</span>
 {/if}
