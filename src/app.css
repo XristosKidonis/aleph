@@ -105,7 +105,9 @@ img { display: block; max-width: 100%; }
 .marca-logo { display: block; width: auto; fill: currentColor; }
 .marca .marca-logo { height: 24px; }
 .marca-grande { display: flex; flex-direction: column; align-items: center; color: var(--tinta); }
-.marca-grande .marca-logo { height: clamp(52px, min(11vw, 15vh), 150px); }
+/* Inicio y arranque: la apilada (alef arriba, palabra abajo); los skins Imprenta y Editorial muestran la horizontal */
+.marca-grande .marca-horizontal { display: none; }
+.marca-grande .marca-apilada { height: clamp(96px, min(17vw, 19vh), 200px); }
 /* decisión final: la marca nunca lleva filtros, sombras, desenfoque ni texturas */
 .marca-logo { filter: none !important; }
 
@@ -1034,7 +1036,7 @@ button.tl-item:hover .tl-que { text-decoration: underline; text-underline-offset
 
 /* arranque: la marca, quieta */
 .arranque { height: 100%; display: grid; place-items: center; align-content: center; gap: 18px; text-align: center; padding: 20px; }
-.arranque .marca-grande .marca-logo { height: clamp(46px, 9vw, 120px); }
+.arranque .marca-grande .marca-apilada { height: clamp(110px, 20vw, 220px); }
 
 /* ---------- responsive ---------- */
 /* La barra del lector se achica según el ancho de SU columna, no el de la ventana: con el Estudio abierto la

@@ -1,16 +1,24 @@
 <script>
   // Marca Aleph: la alef + ALEPH del tablero del dueño, en vector y en el color de la tinta. Sin filtros, sombras
-  // ni texturas. «grande» es la versión del inicio; la normal va en la cabecera.
-  import { LOGO, SIMBOLO_EN_LOGO, NOMBRE_EN_LOGO } from '../lib/marcaAleph.js';
+  // ni texturas. La normal (cabecera) es horizontal. La «grande» (Inicio y arranque) trae los dos armados: apilada
+  // en Blanco y horizontal en Imprenta y Editorial; cuál se ve lo decide skins.css.
+  import { ALEF, PALABRA, HORIZONTAL, APILADA } from '../lib/marcaAleph.js';
   let { grande = false } = $props();
+  const pieza = ([x, y, esc]) => `translate(${x} ${y}) scale(${esc})`;
 </script>
+
+{#snippet armado(a, clase)}
+  <svg class="marca-logo {clase}" viewBox="0 0 {a.ancho} {a.alto}" aria-hidden="true">
+    <path fill-rule="evenodd" transform={pieza(a.alef)} d={ALEF.d} />
+    <path fill-rule="evenodd" transform={pieza(a.palabra)} d={PALABRA.d} />
+  </svg>
+{/snippet}
 
 {#if grande}
   <div class="marca-grande" role="img" aria-label="Aleph">
-    <svg class="marca-logo" viewBox="0 0 {LOGO.ancho} {LOGO.alto}" aria-hidden="true"><path fill-rule="evenodd" d={SIMBOLO_EN_LOGO} /><path fill-rule="evenodd" d={NOMBRE_EN_LOGO} /></svg>
+    {@render armado(APILADA, 'marca-apilada')}
+    {@render armado(HORIZONTAL, 'marca-horizontal')}
   </div>
 {:else}
-  <span class="marca" aria-hidden="true">
-    <svg class="marca-logo" viewBox="0 0 {LOGO.ancho} {LOGO.alto}"><path fill-rule="evenodd" d={SIMBOLO_EN_LOGO} /><path fill-rule="evenodd" d={NOMBRE_EN_LOGO} /></svg>
-  </span>
+  <span class="marca" aria-hidden="true">{@render armado(HORIZONTAL, 'marca-horizontal')}</span>
 {/if}
