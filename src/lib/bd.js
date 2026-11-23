@@ -7,6 +7,11 @@
 export const esTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
 
 let sqlitePromesa = null;
+
+// Al cerrar o recargar la página la descarga de la base se corta: entonces no se reintenta (se bajarían otra
+// vez 67 MB que nadie va a usar).
+let saliendo = false;
+if (typeof window !== 'undefined') window.addEventListener('pagehide', () => { saliendo = true; });
 function sqliteWeb() {
   sqlitePromesa ??= import('@sqlite.org/sqlite-wasm').then((m) => m.default({ print: () => {}, printErr: () => {} }));
   return sqlitePromesa;
@@ -40,6 +45,7 @@ async function biblias() {
   } catch (e) {
     // una copia guardada dañada (p. ej. se cortó mientras se guardaba) no puede dejar la app sin abrir:
     // se borra y se baja otra vez, una sola vez
+    if (saliendo) throw e;
     console.warn('La copia guardada de la base no sirvió; se baja de nuevo', e);
     if (typeof caches === 'undefined' || !(await caches.delete(ALMACEN))) throw e;
     copia = await copiarAlSqlite(sqlite3, await respuestaBiblias(huella), largo);
@@ -87,6 +93,7 @@ async function respuestaBiblias(huella) {
     try { localStorage.setItem(SIN_COPIA, String(Date.now())); } catch { /* sin almacenamiento: igual se baja sin guardar */ }
     return bajar();
   } catch (e) {
+    if (saliendo) throw e;
     console.warn('No se pudo guardar la base en el navegador; se baja sin guardar', e);
     return bajar();
   }
@@ -136,14 +143,29 @@ async function usuario() {
 
 let cacheBiblias = null;
 let cacheUsuario = null;
-export const bdBiblias = () => (cacheBiblias ??= biblias());
+// si falla (p. ej. se cortó la descarga en la web), el próximo uso vuelve a intentar en vez de quedar roto
+export const bdBiblias = () => (cacheBiblias ??= biblias().catch((e) => { cacheBiblias = null; throw e; }));
 export const bdUsuario = () => (cacheUsuario ??= usuario());
 
+export const sinClaves = (s) => String(s).replace(/([?&]key=)[^&)\s]+/gi, '$1…');
+
 // fetch que en Tauri pasa por Rust (sin restricciones CORS) y en el navegador usa el nativo.
-export async function pedir(url) {
-  if (esTauri) {
-    const { fetch: fetchTauri } = await import('@tauri-apps/plugin-http');
-    return fetchTauri(url, { method: 'GET' });
+// Si el servidor no contesta en `espera` ms, se corta: una red colgada no puede dejar la pantalla en
+// «Cargando…» para siempre. El plazo vale hasta que llegan las cabeceras; la descarga del cuerpo (voces de
+// decenas de MB) no tiene plazo.
+export async function pedir(url, { espera = 15000 } = {}) {
+  const corte = new AbortController();
+  const reloj = setTimeout(() => corte.abort(new Error(`sin respuesta en ${espera / 1000} s`)), espera);
+  try {
+    if (esTauri) {
+      const { fetch: fetchTauri } = await import('@tauri-apps/plugin-http');
+      return await fetchTauri(url, { method: 'GET', signal: corte.signal });
+    }
+    return await fetch(url, { signal: corte.signal });
+  } catch (e) {
+    // el error de Rust trae la URL completa, con la clave: se tapa antes de que llegue a la pantalla
+    throw new Error(sinClaves(e?.message || e));
+  } finally {
+    clearTimeout(reloj);
   }
-  return fetch(url);
 }

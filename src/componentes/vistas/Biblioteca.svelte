@@ -60,11 +60,15 @@
 
   {#if visibles.length}
     <div class="cubiertas">
-      {#each visibles as l (l.n)}
+      {#each visibles as l, i (l.n)}
+        <!-- data-sec: el rótulo de sección que los skins Imprenta y Editorial muestran al empezar cada familia -->
         <button class="cubierta fam-{familia(l.n)}" class:firma={FIRMA.has(l.n)} class:aluminio={l.n === 1 || l.n === 19 || l.n === 43 || l.n === 66}
+          class:actual={l.n === usuario.ajustes.pos.libro}
+          data-sec={i === 0 || familia(visibles[i - 1].n) !== familia(l.n) ? t(`fam.${familia(l.n)}`) : null}
           onclick={() => abrir(l)} aria-label={t('bib.abrir', { libro: nombreLibro(l) })}>
           <span class="cub-num">{String(l.n).padStart(2, '0')}</span>
           <span class="cub-titulo">{nombreLibro(l)}</span>
+          <span class="cub-caps" aria-hidden="true">{l.capitulos}</span>
           <span class="cub-tipo">{l.testamento === 'AT' ? t('nav.at') : t('nav.nt')} · {t('bib.capitulos', { n: l.capitulos })}</span>
           {#if FIRMA.has(l.n)}
             <span class="cub-monograma" aria-hidden="true">CR / {String(l.n).padStart(2, '0')}</span>

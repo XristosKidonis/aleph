@@ -82,8 +82,6 @@ const POR_LIBRO = [
   73, 81, 74, 8, 100,
 ];
 
-export const LAMINAS = [...new Set(POR_LIBRO)].sort((a, b) => a - b);
-
 export function grabado(libro) {
   const n = POR_LIBRO[libro - 1];
   if (!n) return null;

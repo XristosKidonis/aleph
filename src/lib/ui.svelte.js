@@ -5,6 +5,8 @@ import { clave, nombreRef, nombreLibro, LIBROS } from './libros.js';
 
 export const ui = $state({
   vista: 'inicio',      // 'inicio' | 'biblioteca' | 'lector' | 'archivo' | 'laminas' | 'historia'
+  puerta: null,         // pantalla que va antes de todo: 'bienvenida' y 'seteo' (la primera vez) | 'candado' (contraseña) | null
+  llegada: false,       // recién se pasó la puerta: el Inicio aparece con un fundido
   historia: { pestana: 'jesus', abierta: null }, // sección Historia: pestaña y prueba abierta
   evidencias: [],       // pruebas que muestra el diálogo «lado a lado» del lector
   evidenciaVerso: null, // { libro, cap, v } desde donde se abrió
@@ -23,9 +25,14 @@ export const ui = $state({
   aviso: null,          // { texto, error }
   leyendo: null,        // versículo que lee la voz
   destello: null,       // { libro, cap, v } a resaltar al llegar
+  portada: 0,           // libro cuya portada se está mostrando a pantalla completa (0 = ninguna)
   busqueda: '',         // texto enviado desde la barra superior
   cap: { cargando: true, error: '', clave: '', versos: [], titulos: {}, paralelo: null, errorParalelo: '' },
 });
+
+// Desplazamiento suave, salvo para quien pidió menos movimiento en su sistema (el CSS no alcanza a las
+// llamadas con behavior: 'smooth' hechas desde código).
+export const desplazamiento = () => (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth');
 
 let temporizadorAviso;
 export function avisar(texto, error = false) {
@@ -34,18 +41,35 @@ export function avisar(texto, error = false) {
   temporizadorAviso = setTimeout(() => (ui.aviso = null), error ? 5200 : 2600);
 }
 
+// Avisos de «uso otra voz porque la elegida no está lista»: una vez por sesión basta; repetirlo en cada play molesta
+const yaAvisados = new Set();
+export function avisarUnaVez(clave, texto) {
+  if (yaAvisados.has(clave)) return;
+  yaAvisados.add(clave);
+  avisar(texto);
+}
+
 export const pos = () => usuario.ajustes.pos;
 
 // Cambia de pantalla; al salir del lector se cierran la selección y los paneles
+// quien eligió «la estoy estudiando» lee con el estudio abierto al lado (en pantallas anchas)
+function estudioAlEntrar(antes) {
+  if (antes !== 'lector' && usuario.ajustes.estudioAlAbrir && typeof window !== 'undefined' && window.innerWidth > 900) ui.estudioAbierto = true;
+}
+
 export function abrirVista(v) {
+  const antes = ui.vista;
   ui.menuBarra = null;
   if (v === 'laminas') ui.coleccion = null;
   if (v !== 'lector') { ui.seleccion = []; ui.navAbierta = false; }
   ui.vista = v;
+  if (v === 'lector') estudioAlEntrar(antes);
   if (typeof window !== 'undefined') requestAnimationFrame(() => document.querySelector('.vista')?.scrollTo?.(0, 0));
 }
 
 export function irA(libro, cap, v = null) {
+  const desdeBiblioteca = ui.vista === 'biblioteca';
+  estudioAlEntrar(ui.vista);
   ui.vista = 'lector';
   ui.buscadorAbierto = false;
   ui.seleccion = [];
@@ -53,6 +77,9 @@ export function irA(libro, cap, v = null) {
   ui.navAbierta = false;
   ui.destello = v ? { libro, cap, v } : null;
   if (v) ui.seleccion = [v];
+  // al abrir un libro por su comienzo (otro libro, o cualquiera desde la Biblioteca), primero su portada;
+  // no al «Continuar leyendo», ni al saltar a un versículo puntual, ni al volver al capítulo 1 desde el 2
+  if (!v && cap === 1 && (libro !== pos().libro || desdeBiblioteca) && usuario.ajustes.portadas !== false) ui.portada = libro;
   guardarPosicion(libro, cap);
 }
 
@@ -83,6 +110,10 @@ export async function recargarCapitulo() {
   const n = ++pedido;
   ui.cap.cargando = true;
   ui.cap.error = '';
+  // la paralela se pide a la vez que la principal (con la NTV en línea ahorra una vuelta de red entera)
+  const conParalela = paralela && paralela !== version && info(paralela);
+  const pedidoParalelo = conParalela ? cargarCapitulo(paralela, libro, cap, claveNLT) : null;
+  pedidoParalelo?.catch(() => {}); // su error se muestra abajo; aquí solo se evita el aviso de promesa sin atender
   try {
     const datos = await cargarCapitulo(version, libro, cap, claveNLT);
     if (n !== pedido) return;
@@ -98,9 +129,9 @@ export async function recargarCapitulo() {
   }
   ui.cap.paralelo = null;
   ui.cap.errorParalelo = '';
-  if (paralela && paralela !== version && info(paralela)) {
+  if (pedidoParalelo) {
     try {
-      const p = await cargarCapitulo(paralela, libro, cap, claveNLT);
+      const p = await pedidoParalelo;
       if (n === pedido) ui.cap.paralelo = Object.fromEntries(p.versos.map((x) => [x.v, x.texto]));
     } catch (e) {
       if (n === pedido) ui.cap.errorParalelo = e.message || String(e);

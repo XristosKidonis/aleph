@@ -12,6 +12,7 @@
   let colorFiltro = $state(null); // dentro de «Subrayados»: solo un color de tu clave
   let q = $state('');
   let texto = $state({}); // clave -> texto del versículo
+  let sinTextos = $state(''); // si la base no respondió, se dice en vez de dejar «…» para siempre
   const version = $derived(versionEstudio(usuario.ajustes.version));
 
   const orden = (libro, cap, v = 0) => libro * 1e6 + cap * 1e3 + v;
@@ -38,7 +39,7 @@
   $effect(() => {
     const faltan = entradas.filter((e) => e.k && e.tipo !== 'nota' && !(e.k in texto)).map((e) => ({ libro: e.libro, cap: e.cap, v: e.v }));
     if (!faltan.length) return;
-    textos(version, faltan).then((r) => (texto = { ...texto, ...r })).catch(() => {});
+    textos(version, faltan).then((r) => { texto = { ...texto, ...r }; sinTextos = ''; }).catch((e) => (sinTextos = e.message || String(e)));
   });
 
   const FILTROS = [['todo', 'arc.todo'], ['guardados', 'arc.guardados'], ['subrayados', 'arc.subrayados'], ['notas', 'arc.notas']];
@@ -105,6 +106,7 @@
   {:else if !visibles.length}
     <p class="vacio-vista">{t('arc.sinResultados', { q })}</p>
   {:else}
+    {#if sinTextos}<p class="nota-pie" role="status">{t('arc.sinTextos', { e: sinTextos })}</p>{/if}
     <ol class="archivo">
       {#each visibles as e (e.id)}
         <li class="archivo-entrada tipo-{e.tipo}">

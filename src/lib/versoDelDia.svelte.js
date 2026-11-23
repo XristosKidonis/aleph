@@ -24,8 +24,12 @@ export function cargarVersoDelDia() {
       dia.texto = await conLimite(pasaje(preferida, vd.libro, vd.cap, vd.v, vd.hasta, usuario.ajustes.claveNLT), 2500);
       dia.version = preferida;
     } catch {
-      dia.texto = await pasaje(local, vd.libro, vd.cap, vd.v, vd.hasta);
-      dia.version = local;
+      try {
+        dia.texto = await pasaje(local, vd.libro, vd.cap, vd.v, vd.hasta);
+        dia.version = local;
+      } catch {
+        return; // la base todavía no llegó o se cortó su descarga: sin lámina del día, y se reintenta al volver al inicio
+      }
     }
     dia.idioma = ingles ? 'en' : 'es';
   })().finally(() => { enCurso = null; });

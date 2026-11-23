@@ -2,7 +2,7 @@
   import { tick, untrack } from 'svelte';
   import Frontis from './Frontis.svelte';
   import LectorBarra from './LectorBarra.svelte';
-  import { ui, irA, abrirPestana, avisar, recargarCapitulo } from '../lib/ui.svelte.js';
+  import { ui, irA, abrirPestana, avisar, recargarCapitulo, desplazamiento } from '../lib/ui.svelte.js';
   import { usuario, ajustar, marcarLeido, indiceRetroenlaces } from '../lib/usuario.svelte.js';
   import { info, versionEstudio } from '../lib/biblia.js';
   import { LIBROS, clave, nombreRef, nombreLibro, capituloSiguiente } from '../lib/libros.js';
@@ -19,7 +19,8 @@
   const leido = $derived(usuario.leidos[`${pos.libro}.${pos.cap}`]);
   const anterior = $derived(capituloSiguiente(pos.libro, pos.cap, -1));
   const siguiente = $derived(capituloSiguiente(pos.libro, pos.cap, 1));
-  const conGrabado = $derived(pos.cap === 1 && usuario.ajustes.grabados !== false);
+  // el grabado de Doré sobre el capítulo 1 solo si no se usan las portadas azules (que lo reemplazan)
+  const conGrabado = $derived(pos.cap === 1 && usuario.ajustes.grabados !== false && usuario.ajustes.portadas === false);
 
   let lector;
   let finEl;
@@ -254,7 +255,7 @@
     // si el versículo queda debajo de la barra de acciones, sube un poco el texto para que se vea
     requestAnimationFrame(() => {
       const abajo = el.getBoundingClientRect().bottom - (innerHeight - (innerWidth <= 760 ? 230 : 130));
-      if (abajo > 0 && ui.seleccion.length) lector.scrollBy({ top: abajo, behavior: 'smooth' });
+      if (abajo > 0 && ui.seleccion.length) lector.scrollBy({ top: abajo, behavior: desplazamiento() });
     });
   }
 

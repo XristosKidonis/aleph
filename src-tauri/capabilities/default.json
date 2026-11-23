@@ -5,6 +5,11 @@
   "windows": ["main"],
   "permissions": [
     "core:default",
+    "core:window:allow-close",
+    "core:window:allow-minimize",
+    "core:window:allow-toggle-maximize",
+    "core:window:allow-start-dragging",
+    "core:window:allow-internal-toggle-maximize",
     "sql:default",
     "sql:allow-execute",
     {
@@ -21,6 +26,8 @@
     "dialog:allow-save",
     "fs:allow-write-file",
     "fs:allow-write-text-file",
+    { "identifier": "fs:allow-exists", "allow": [{ "path": "$APPCONFIG/quitar-candado.txt" }] },
+    { "identifier": "fs:allow-remove", "allow": [{ "path": "$APPCONFIG/quitar-candado.txt" }] },
     "opener:default",
     "updater:default",
     "process:allow-restart"

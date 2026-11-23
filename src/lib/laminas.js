@@ -230,7 +230,7 @@ function firma(ctx, x, y, color, s, alinear = 'left') {
   espaciado(ctx, 5 * s);
   ctx.fillStyle = color;
   ctx.textAlign = alinear;
-  ctx.fillText('CHI-RO HEIRS', x, y);
+  ctx.fillText('ALEPH', x, y);
   ctx.restore();
 }
 

@@ -2,7 +2,7 @@
 // Necesita una clave gratuita y conexión. Cada Biblia en audio viene partida en Antiguo y Nuevo Testamento
 // (o completa); por capítulo hay un MP3 y, en muchas, los segundos en que empieza cada versículo.
 import { usuario } from './usuario.svelte.js';
-import { ui, avisar } from './ui.svelte.js';
+import { ui, avisar, avisarUnaVez } from './ui.svelte.js';
 import { pedir } from './bd.js';
 import { t } from './i18n.svelte.js';
 
@@ -46,7 +46,7 @@ export async function bibliasEnAudio(lang, clave) {
 // o null si no se puede (sin clave, sin Biblia elegida, o esa Biblia no tiene este testamento).
 export async function leerNarrada(lang, { voz, mostrar, versos, audio: reproductor }) {
   const elegida = usuario.ajustes[lang === 'en' ? 'audioEn' : 'audioEs'];
-  if (!usuario.ajustes.claveBibleBrain || !elegida) { avisar(t('narrada.falta')); return null; }
+  if (!usuario.ajustes.claveBibleBrain || !elegida) { avisarUnaVez('narrada', t('narrada.falta')); return null; }
   const { libro, cap } = usuario.ajustes.pos;
   const fileset = libro <= 39 ? elegida.AT : elegida.NT;
   if (!fileset) { avisar(t('narrada.noCubre', { b: elegida.nombre })); return null; }

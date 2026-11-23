@@ -9,7 +9,7 @@
   import Figura from '../historia/Figura.svelte';
   import { CABECERA, imagen } from '../../lib/imagenesHistoria.js';
   import { GRADOS, GRUPOS, pruebasDe } from '../../lib/evidencias.js';
-  import { ui } from '../../lib/ui.svelte.js';
+  import { ui, desplazamiento } from '../../lib/ui.svelte.js';
   import { t } from '../../lib/i18n.svelte.js';
 
   const PESTANAS = ['jesus', 'juan', 'quiz', 'tiempo'];
@@ -19,7 +19,7 @@
     ui.historia.pestana = p.figura;
     ui.historia.abierta = p.id;
     await tick();
-    document.getElementById(`prueba-${p.id}`)?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    document.getElementById(`prueba-${p.id}`)?.scrollIntoView({ block: 'start', behavior: desplazamiento() });
   }
   const alternar = (id) => (ui.historia.abierta = ui.historia.abierta === id ? null : id);
 </script>

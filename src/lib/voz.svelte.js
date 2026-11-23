@@ -1,5 +1,5 @@
 // Lectura en voz alta con las voces del sistema (Web Speech API).
-import { ui, avisar } from './ui.svelte.js';
+import { ui, avisar, avisarUnaVez, desplazamiento } from './ui.svelte.js';
 import { usuario } from './usuario.svelte.js';
 import { info } from './biblia.js';
 import { t } from './i18n.svelte.js';
@@ -73,7 +73,7 @@ const inicioLectura = (desdeSeleccion) => {
 };
 const mostrar = (v) => {
   ui.leyendo = v;
-  document.querySelector(`.texto [data-v="${v}"]`)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  document.querySelector(`.texto [data-v="${v}"]`)?.scrollIntoView({ block: 'center', behavior: desplazamiento() });
 };
 
 // Lee con la voz elegida en Ajustes: la natural (IA) o la narrada si están listas; si no, la del sistema.
@@ -97,7 +97,7 @@ export async function leer({ desdeSeleccion = false } = {}) {
     const id = usuario.ajustes[lang === 'en' ? 'vozNeuralEn' : 'vozNeuralEs'];
     const neural = await import('./vozNeural.js');
     if (id && (await neural.instalada(id))) { leerNatural(neural, id, desde); return; }
-    avisar(t('voz.naturalFalta'));
+    avisarUnaVez('natural', t('voz.naturalFalta'));
   }
   leerSistema(lang, desde);
 }

@@ -1,6 +1,6 @@
 // Ambiente: música y sonidos para leer, todo dentro de la app y sin internet.
 // - Música: grabaciones reales de dominio público o con licencia libre (piano, himnos, coral y cuerdas),
-//   ver musica.js. Suena con un elemento <audio> y se funde al empezar, al cambiar de pista y al pausar.
+//   ver musica.js. Suena con dos <audio>: al cambiar de pista una se disuelve en la otra; al pausar, se funde.
 // - Sonidos: lluvia, fuego, viento y olas, generados con Web Audio (no son grabaciones).
 // La música baja sola cuando la app lee en voz alta y puede apagarse con un temporizador o al terminar el capítulo.
 import { usuario, ajustar } from './usuario.svelte.js';
@@ -88,74 +88,98 @@ function lfo(frecuencia, cantidad, destino) {
 }
 
 // ---------- música grabada ----------
-// Un solo <audio>. El volumen final = volumen elegido × (baja con la voz) × fundido de pista × fundido general.
-let audio = null;
-let blob = null;       // URL del archivo en memoria (en la app de escritorio se pide con fetch y se toca desde un blob)
-let pedido = 0;        // para descartar cargas viejas si se cambia rápido de pista
-const nivel = { pista: 1, general: 0 };
+// Dos <audio>, como dos platos: la pista nueva se carga en el que está libre mientras la actual sigue sonando,
+// y cuando está lista una se disuelve en la otra (fundido cruzado). Nunca quedan dos pistas sonando juntas:
+// la que sale termina en silencio y se detiene.
+// Volumen de cada plato = volumen elegido × (baja con la voz) × su fundido × fundido general.
+const DISOLVER = 2600;  // ms del fundido cruzado entre una pista y la siguiente
 const SILENCIO = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
+let platos = null;     // [{ el, nivel, blob, fundido }]
+let activo = null;     // el plato que suena (o el último que sonó)
+let pedido = 0;        // para descartar cargas viejas si se cambia rápido de pista
+const general = { nivel: 0, fundido: null }; // fundido general: al dar play y al pausar
 
-function elemento() {
-  if (audio) return audio;
-  audio = new Audio();
-  audio.preload = 'auto';
-  audio.addEventListener('ended', () => { if (audio.src !== SILENCIO && amb.sonando) siguiente(); });
-  return audio;
+function crearPlatos() {
+  if (platos) return platos;
+  platos = [0, 1].map(() => {
+    const el = new Audio();
+    el.preload = 'auto';
+    const plato = { el, nivel: 0, blob: null, fundido: null };
+    el.addEventListener('ended', () => { if (plato === activo && amb.sonando) siguiente(); });
+    return plato;
+  });
+  activo = platos[0];
+  return platos;
 }
+const conPista = (pl) => pl?.el.src && pl.el.src !== SILENCIO;
 
 function aplicarVolumenMusica() {
-  if (!audio) return;
+  if (!platos) return;
   const p = preferencias();
-  const v = p.volumen * (voz.activa ? 0.25 : 1) * nivel.pista * nivel.general; // la música baja mientras la app lee
-  audio.volume = Math.max(0, Math.min(1, v));
+  const base = p.volumen * (voz.activa ? 0.25 : 1) * general.nivel; // la música baja mientras la app lee
+  for (const pl of platos) pl.el.volume = Math.max(0, Math.min(1, base * pl.nivel));
 }
 
-// Lleva nivel[cual] a «hasta» en «ms» milisegundos.
-// Un fundido nuevo corta al anterior y lo da por terminado: si no, quien esperaba al anterior se quedaba
-// esperando para siempre (tocar «Siguiente» mientras arrancaba una pista dejaba el Ambiente en «Cargando…»).
-const fundidos = {}; // cual -> { reloj, listo }
-function fundir(cual, hasta, ms) {
-  const previo = fundidos[cual];
-  if (previo) { clearInterval(previo.reloj); previo.listo(); }
-  const desde = nivel[cual];
+// Fundidos con curva suave. Uno nuevo sobre lo mismo corta al anterior y lo da por terminado: si no, quien
+// esperaba al anterior se quedaba esperando para siempre.
+function fundirNivel(dueno, clave, hasta, ms) {
+  dueno.fundido?.cortar();
+  const desde = dueno[clave];
   const t0 = performance.now();
   return new Promise((listo) => {
-    if (ms <= 0) { fundidos[cual] = null; nivel[cual] = hasta; aplicarVolumenMusica(); listo(); return; }
-    const este = { listo, reloj: setInterval(() => {
-      const k = Math.min(1, (performance.now() - t0) / ms);
-      nivel[cual] = desde + (hasta - desde) * (k * k * (3 - 2 * k));
-      aplicarVolumenMusica();
-      if (k >= 1) { clearInterval(este.reloj); if (fundidos[cual] === este) fundidos[cual] = null; listo(); }
-    }, 40) };
-    fundidos[cual] = este;
+    const este = {
+      cortar() { clearInterval(este.reloj); listo(); },
+      reloj: setInterval(() => {
+        const k = ms <= 0 ? 1 : Math.min(1, (performance.now() - t0) / ms);
+        dueno[clave] = desde + (hasta - desde) * (k * k * (3 - 2 * k));
+        aplicarVolumenMusica();
+        if (k >= 1) { clearInterval(este.reloj); if (dueno.fundido === este) dueno.fundido = null; listo(); }
+      }, 40),
+    };
+    dueno.fundido = este;
   });
+}
+const fundirGeneral = (hasta, ms) => fundirNivel(general, 'nivel', hasta, ms);
+
+function soltar(pl) {
+  pl.el.pause();
+  if (pl.blob) { URL.revokeObjectURL(pl.blob); pl.blob = null; }
 }
 
 async function tocarPista(lista, indice) {
   const pistas = LISTAS[lista];
   const i = ((indice % pistas.length) + pistas.length) % pistas.length;
   const n = ++pedido;
-  const a = elemento();
-  if (!a.paused && a.src !== SILENCIO) await fundir('pista', 0, 700);
-  if (n !== pedido) return;
-  a.pause();
+  crearPlatos();
   amb.lista = lista;
   amb.indice = i;
   amb.pista = pistas[i];
   amb.cargando = true;
   try {
+    // mientras baja la nueva, la actual sigue sonando
     const r = await fetch(archivoPista(pistas[i]));
     if (!r.ok) throw new Error(r.status);
     const url = URL.createObjectURL(await r.blob());
     if (n !== pedido) { URL.revokeObjectURL(url); return; }
-    if (blob) URL.revokeObjectURL(blob);
-    blob = url;
-    a.src = url;
-    nivel.pista = 0;
+    const sale = activo;
+    const entra = platos.find((pl) => pl !== sale);
+    entra.fundido?.cortar();
+    soltar(entra);
+    entra.blob = url;
+    entra.el.src = url;
+    entra.nivel = 0;
     aplicarVolumenMusica();
-    if (amb.sonando) await a.play();
-    if (n !== pedido) return; // mientras arrancaba se pidió otra pista: no pisar su fundido
-    fundir('pista', 1, 1200);
+    activo = entra;
+    if (amb.sonando) await entra.el.play();
+    if (n !== pedido) return;
+    // fundido cruzado: la que sale baja mientras la que entra sube, y al final la que sale se detiene
+    if (conPista(sale) && !sale.el.paused) {
+      fundirNivel(sale, 'nivel', 0, DISOLVER).then(() => { if (sale !== activo) soltar(sale); });
+      fundirNivel(entra, 'nivel', 1, DISOLVER);
+    } else {
+      soltar(sale);
+      fundirNivel(entra, 'nivel', 1, 1200);
+    }
   } catch (e) {
     console.warn('ambiente: no se pudo tocar', pistas[i].id, e);
   } finally {
@@ -166,16 +190,19 @@ async function tocarPista(lista, indice) {
 function pararMusica() {
   pedido++;
   amb.cargando = false;
-  if (!audio) return;
-  fundir('pista', 0, 700).then(() => { if (!amb.sonando || !preferencias().musica) audio.pause(); });
+  if (!platos) return;
+  for (const pl of platos) {
+    if (pl.el.paused) continue;
+    fundirNivel(pl, 'nivel', 0, 900).then(() => { if (!amb.sonando || !preferencias().musica) pl.el.pause(); });
+  }
 }
 
 async function ponerMusica(cual) {
   if (!cual) { pararMusica(); return; }
   if (!amb.sonando) return;
   // si esa lista ya estaba sonando, sigue donde iba; si no, empieza en una pista al azar
-  if (amb.lista === cual && audio?.src && audio.src !== SILENCIO) {
-    if (audio.paused) { await audio.play().catch(() => {}); fundir('pista', 1, 1000); }
+  if (amb.lista === cual && conPista(activo)) {
+    if (activo.el.paused) { await activo.el.play().catch(() => {}); fundirNivel(activo, 'nivel', 1, 1000); }
     return;
   }
   await tocarPista(cual, Math.floor(Math.random() * LISTAS[cual].length));
@@ -189,7 +216,7 @@ export function anterior() {
   const lista = amb.lista || preferencias().musica;
   if (!lista) return;
   // como en cualquier reproductor: si ya avanzó un poco, vuelve al principio de la misma
-  if (audio && audio.currentTime > 6) { audio.currentTime = 0; return; }
+  if (conPista(activo) && activo.el.currentTime > 6) { activo.el.currentTime = 0; return; }
   tocarPista(lista, amb.indice - 1);
 }
 export function elegirPista(lista, indice) {
@@ -298,15 +325,15 @@ function programarFin() {
 // reproducir() se llama desde un toque: ahí mismo se «desbloquea» el <audio> (Safari y WebKit exigen un gesto)
 export async function reproducir(indice) {
   contexto();
-  const a = elemento();
-  if (!a.src) { a.src = SILENCIO; a.play().catch(() => {}); }
+  // los dos platos se desbloquean aquí, dentro del toque
+  for (const pl of crearPlatos()) if (!pl.el.src) { pl.el.src = SILENCIO; pl.el.play().catch(() => {}); }
   amb.sonando = true;
   if (ctx) {
     await ctx.resume();
     salida.gain.cancelScheduledValues(ctx.currentTime);
     salida.gain.setTargetAtTime(1, ctx.currentTime, 0.8);
   }
-  fundir('general', 1, 1500);
+  fundirGeneral(1, 1500);
   aplicarCapas();
   programarFin();
   const cual = preferencias().musica;
@@ -321,8 +348,12 @@ export function pausar() {
   clearInterval(reloj);
   amb.restante = 0;
   if (ctx) salida.gain.setTargetAtTime(0, ctx.currentTime, 1.2);
-  fundir('general', 0, 3500).then(() => { if (!amb.sonando) audio?.pause(); });
-  setTimeout(() => { if (!amb.sonando) aplicarCapas(); }, 5000);
+  fundirGeneral(0, 3500).then(() => { if (!amb.sonando) platos?.forEach((pl) => pl.el.pause()); });
+  setTimeout(() => {
+    if (amb.sonando) return;
+    aplicarCapas();
+    ctx?.suspend().catch(() => {}); // en silencio el motor de audio queda detenido: no gasta batería
+  }, 5000);
 }
 
 export const alternar = () => (amb.sonando ? pausar() : reproducir());

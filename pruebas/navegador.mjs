@@ -1,4 +1,4 @@
-// Prueba funcional de Chi-Ro Heirs en modo navegador.
+// Prueba funcional de Aleph en modo navegador.
 import { createRequire } from 'node:module';
 import { readFileSync } from 'node:fs';
 // Requiere Playwright (npm i -g playwright) y «npm run dev» en marcha. PLAYWRIGHT_DIR apunta a node_modules global.
@@ -61,6 +61,16 @@ const paso = async (nombre, fn) => {
   try { await fn(); console.log('OK  ', nombre); } catch (e) { console.log('FALLA', nombre, '-', e.message.split('\n')[0]); errores.push(nombre); }
 };
 
+// La primera vez: bienvenida (siempre en Blanco). Se salta la animación, se pone un nombre y se entra.
+async function pasarBienvenida(p, nombre = 'Prueba', clave = '') {
+  await p.waitForSelector('.bienvenida', { timeout: 20000 });
+  await p.click('.puerta-saltar');
+  await p.fill('#bv-nombre', nombre);
+  if (clave) { await p.check('.puerta-casilla input'); await p.fill('#bv-clave', clave); }
+  await p.press('#bv-nombre', 'Enter');
+  await p.click('.seteo-ahora-no', { timeout: 20000 });
+  await p.waitForSelector('.inicio .marca-grande', { timeout: 20000 });
+}
 // Inicio → «Continuar leyendo» → lector
 async function entrar(p) {
   await p.waitForSelector('.inicio-entrada', { timeout: 20000 });
@@ -86,10 +96,35 @@ async function abrirEstudio(p) {
 }
 const titulo = (p) => p.textContent('.cap-titulo');
 await pag.goto(DIRECCION);
+await paso('bienvenida: en Blanco, «hola» en varios idiomas, pide el nombre y el Inicio saluda', async () => {
+  await pag.waitForSelector('.bienvenida', { timeout: 20000 });
+  if (await pag.evaluate(() => document.documentElement.dataset.skin)) throw new Error('la bienvenida no está en Blanco');
+  await pag.waitForFunction(() => document.querySelector('.puerta-palabra')?.textContent === 'Hola', null, { timeout: 5000 });
+  await pag.waitForFunction(() => document.querySelector('.puerta-palabra')?.textContent === 'Hello', null, { timeout: 5000 });
+  if (await pag.$('.buscador[open]')) throw new Error('el buscador se abre antes de entrar');
+  await pag.keyboard.press('Control+k');
+  if (await pag.$('.buscador[open]')) throw new Error('Ctrl K abre el buscador durante la bienvenida');
+  await pag.click('.puerta-saltar');
+  await pag.waitForSelector('.puerta-forma.ver');
+  if (!(await pag.isDisabled('.puerta-entrar'))) throw new Error('se puede entrar sin nombre');
+  await pag.fill('#bv-nombre', 'Xristos');
+  await pag.press('#bv-nombre', 'Enter');
+  await pag.waitForFunction(() => /Hola, Xristos\./.test(document.querySelector('.puerta-palabra')?.textContent || ''), null, { timeout: 5000 });
+  await pag.waitForSelector('.seteo .seteo-opcion', { timeout: 10000 });
+  if (await pag.evaluate(() => document.documentElement.dataset.skin)) throw new Error('el seteo no está en Blanco');
+  await pag.click('.seteo-ahora-no');
+  await pag.waitForSelector('.inicio .marca-grande', { timeout: 10000 });
+  const saludo = await pag.textContent('.inicio-saludo');
+  if (saludo !== 'Hola, Xristos') throw new Error('saludo: ' + saludo);
+  await pag.reload();
+  await pag.waitForSelector('.inicio .marca-grande', { timeout: 20000 });
+  if (await pag.$('.puerta')) throw new Error('la bienvenida volvió a salir');
+});
 await paso('inicio con la marca nítida, cinco entradas y biblioteca de 66 libros', async () => {
   await pag.waitForSelector('.inicio .marca-grande');
-  const estilo = await pag.evaluate(() => { const c = getComputedStyle(document.querySelector('.marca-grande > span')); return [c.filter, c.textShadow, document.querySelector('.marca-grande').textContent]; });
-  if (estilo[0] !== 'none' || estilo[1] !== 'none' || !/CHI—RO\s*HEIRS/.test(estilo[2])) throw new Error(estilo.join(' | '));
+  // la marca Aleph es el vector (alef + ALEPH), sin filtros y con tamaño real
+  const estilo = await pag.evaluate(() => { const g = document.querySelector('.marca-grande'); const l = g.querySelector('.marca-logo'); return [getComputedStyle(l).filter, g.getAttribute('aria-label'), l.querySelectorAll('path').length, Math.round(l.getBoundingClientRect().width)]; });
+  if (estilo[0] !== 'none' || estilo[1] !== 'Aleph' || estilo[2] !== 2 || estilo[3] < 200) throw new Error(estilo.join(' | '));
   if ((await pag.locator('.inicio-entrada').count()) !== 5) throw new Error('el inicio no tiene cinco entradas');
   if (await pag.locator('.inicio img:not(.inicio-cultura img)').count()) throw new Error('foto en el inicio');
   const sugerencia = await pag.locator('.inicio-empezar button').textContent();
@@ -97,12 +132,16 @@ await paso('inicio con la marca nítida, cinco entradas y biblioteca de 66 libro
   await pag.click('.inicio-entrada >> nth=1');
   await pag.waitForSelector('.cubierta');
   if ((await pag.locator('.cubierta').count()) !== 66) throw new Error('faltan libros');
-  const filtroLogo = await pag.evaluate(() => getComputedStyle(document.querySelector('.cabecera .marca-main')).filter);
+  const filtroLogo = await pag.evaluate(() => getComputedStyle(document.querySelector('.cabecera .marca-logo')).filter);
   if (filtroLogo !== 'none') throw new Error('logo con filtro: ' + filtroLogo);
   await pag.click('.filtro >> nth=2');
   if ((await pag.locator('.cubierta').count()) !== 27) throw new Error('filtro NT');
   await pag.click('.filtro >> nth=0');
   await pag.click('.cubierta >> nth=0');
+  // abrir un libro desde la Biblioteca muestra su portada; un toque la salta
+  await pag.waitForSelector('.portada .pt-nota', { timeout: 5000 });
+  await pag.click('.portada');
+  await pag.waitForSelector('.portada', { state: 'detached', timeout: 3000 });
   await pag.waitForSelector('.texto .v', { timeout: 20000 });
 });
 await paso('arranca en Génesis 1 con NTV', async () => {
@@ -247,8 +286,15 @@ await paso('vista paralela RV1909 + KJV', async () => {
   await pag.selectOption('.lb-paralela select', 'KJV');
   await pag.keyboard.press('Escape');
   await pag.waitForSelector('.texto.paralelo .fila .p2');
-  // el botón de la versión dice con cuál se compara
-  if (!/RV1909\s*∥\s*KJV/.test(await pag.textContent('.lb-versiones'))) throw new Error('el botón no muestra la paralela');
+  // la versión en su botón y, al lado, el botón Comparar dice con cuál se compara
+  if (!/RV1909/.test(await pag.textContent('.lb-versiones'))) throw new Error('el botón no muestra la versión');
+  if (!/∥\s*KJV/.test(await pag.textContent('.lb-comparar'))) throw new Error('el botón Comparar no muestra la paralela');
+  // las dos listas del menú vienen separadas por idioma
+  await pag.click('.lb-comparar');
+  if (await pag.evaluate(() => document.activeElement?.closest('.lb-paralela') === null)) throw new Error('Comparar no enfoca la lista');
+  const grupos = await pag.$$eval('.lb-paralela select optgroup', (g) => g.map((x) => x.label));
+  if (grupos.length !== 2) throw new Error('la lista de comparar no se divide por idioma: ' + grupos.join(' | '));
+  await pag.keyboard.press('Escape');
   const t = await pag.textContent('.texto .fila:nth-child(16) .p2 .t').catch(() => '');
   const kjv = await pag.locator('.texto .p2[data-v="16"] .t').textContent();
   if (!/For God so loved/.test(kjv)) throw new Error(kjv);
@@ -697,6 +743,29 @@ await paso('lector oscuro y vuelta a claro', async () => {
   await pag.waitForFunction(() => document.documentElement.dataset.theme === 'light');
 });
 
+await paso('portada: abrir otro libro muestra su portada, un toque la salta y queda el capítulo', async () => {
+  await pag.click('.cab-link:has-text("Biblioteca")');
+  await pag.click('.cubierta:has-text("Deuteronomio")');
+  await pag.waitForSelector('.portada .pt-nota', { timeout: 5000 });
+  const notas = await pag.$$eval('.pt-nota', (ns) => ns.map((n) => n.textContent));
+  if (notas[0] !== 'Libro 05 de 66' || !/34 capítulos · 959 versículos/.test(notas[3])) throw new Error(notas.join(' | '));
+  // el nombre largo entra entero a lo ancho, sin pisar las notas
+  const { palabra, nota } = await pag.evaluate(() => ({
+    palabra: document.querySelector('.pt-palabra i').getBoundingClientRect().right,
+    nota: document.querySelector('.pt-nota').getBoundingClientRect().left,
+  }));
+  if (palabra > nota) throw new Error(`la palabra (${palabra}) pisa la nota (${nota})`);
+  await pag.waitForTimeout(1500);
+  await pag.screenshot({ path: `${OUT}/08b-portada.png` });
+  await pag.click('.portada');
+  await pag.waitForSelector('.portada', { state: 'detached', timeout: 3000 });
+  if (!/Deuteronomio\s*1/.test(await titulo(pag))) throw new Error(await titulo(pag));
+  if (await pag.$('.frontis')) throw new Error('el grabado antiguo sigue saliendo con las portadas activas');
+  // saltar a un versículo puntual (búsqueda) no la muestra
+  await ir(pag, 'Jn 3:16');
+  if (await pag.$('.portada')) throw new Error('apareció al saltar a un versículo');
+});
+
 // Móvil
 const movil = await navegador.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true });
 const pm = await movil.newPage();
@@ -706,6 +775,7 @@ await pm.route('https://api.nlt.to/**', (route) => {
   route.fulfill({ status: 200, contentType: 'text/html', body: falsaNLT(u.searchParams.get('ref'), u.searchParams.get('version')) });
 });
 await pm.goto(DIRECCION);
+await pasarBienvenida(pm);
 await pm.waitForSelector('.inicio-entrada'); // que termine de bajar la base antes de recargar (WebKit lo cuenta como error)
 await paso('móvil (390 y 320 px): todas las pantallas sin desbordes horizontales', async () => {
   for (const ancho of [390, 320]) {
@@ -727,6 +797,96 @@ await paso('móvil (390 y 320 px): todas las pantallas sin desbordes horizontale
   await pm.waitForSelector('.texto .v', { timeout: 20000 });
 });
 await pm.screenshot({ path: `${OUT}/09-movil.png` });
+
+// Candado: contraseña al abrir (solo guarda sal + hash), contraseña mala, buena, y quitarla en Ajustes
+const ctxCandado = await navegador.newContext({ viewport: { width: 1280, height: 800 } });
+const pc = await ctxCandado.newPage();
+pc.on('pageerror', (e) => errores.push('candado pageerror: ' + e.message));
+await pc.route('https://api.nlt.to/**', (route) => {
+  const u = new URL(route.request().url());
+  route.fulfill({ status: 200, contentType: 'text/html', body: falsaNLT(u.searchParams.get('ref'), u.searchParams.get('version')) });
+});
+await paso('candado: pide la contraseña al abrir, rechaza la mala, abre con la buena y se puede quitar', async () => {
+  await pc.goto(DIRECCION);
+  await pc.waitForSelector('.bienvenida', { timeout: 20000 });
+  await pc.click('.puerta-saltar');
+  await pc.fill('#bv-nombre', 'Ana');
+  await pc.check('.puerta-casilla input');
+  await pc.fill('#bv-clave', 'ab');
+  await pc.press('#bv-clave', 'Enter');
+  await pc.waitForSelector('.puerta-ayuda.error');
+  await pc.fill('#bv-clave', 'cordero7');
+  await pc.press('#bv-clave', 'Enter');
+  await pc.click('.seteo-ahora-no', { timeout: 15000 });
+  await pc.waitForSelector('.inicio .marca-grande', { timeout: 15000 });
+  const guardado = await pc.evaluate(() => JSON.stringify(Object.entries(localStorage)));
+  if (guardado.includes('cordero7')) throw new Error('la contraseña quedó guardada en claro');
+  await pc.reload();
+  await pc.waitForSelector('.candado #cd-clave', { timeout: 20000 });
+  if (!/Hola de nuevo, Ana\./.test(await pc.textContent('.puerta-hola'))) throw new Error('sin saludo en el candado');
+  await pc.keyboard.press('Control+k');
+  if (await pc.$('.buscador[open]')) throw new Error('Ctrl K abre el buscador con el candado puesto');
+  await pc.fill('#cd-clave', 'otra');
+  await pc.press('#cd-clave', 'Enter');
+  await pc.waitForSelector('#cd-mal');
+  if (await pc.$('.inicio')) throw new Error('entró con la contraseña mala');
+  await pc.fill('#cd-clave', 'cordero7');
+  await pc.press('#cd-clave', 'Enter');
+  await pc.waitForSelector('.inicio .marca-grande', { timeout: 10000 });
+  await pc.click('.inicio-entrada >> nth=1');
+  await pc.click('.cab-ajustes, [aria-label="Ajustes"]');
+  await pc.waitForSelector('#aj-candado');
+  await pc.fill('#aj-candado', 'cordero7');
+  await pc.press('#aj-candado', 'Enter');
+  await pc.waitForFunction(() => document.querySelector('#aj-candado')?.placeholder === 'Nueva contraseña');
+  await pc.reload();
+  await pc.waitForSelector('.inicio .marca-grande', { timeout: 20000 });
+  if (await pc.$('.candado')) throw new Error('el candado sigue después de quitarlo');
+});
+await ctxCandado.close();
+
+// Seteo de la primera vez: las cinco respuestas cambian el Inicio, la versión, la letra, el tema y el estudio
+const ctxSeteo = await navegador.newContext({ viewport: { width: 1360, height: 860 } });
+const ps = await ctxSeteo.newPage();
+ps.on('pageerror', (e) => errores.push('seteo pageerror: ' + e.message));
+await ps.route('https://api.nlt.to/**', (route) => {
+  const u = new URL(route.request().url());
+  route.fulfill({ status: 200, contentType: 'text/html', body: falsaNLT(u.searchParams.get('ref'), u.searchParams.get('version')) });
+});
+await paso('seteo: cinco preguntas personalizan Inicio, versión, letra, tema y estudio', async () => {
+  await ps.goto(DIRECCION);
+  await ps.waitForSelector('.bienvenida', { timeout: 20000 });
+  await ps.click('.puerta-saltar');
+  await ps.fill('#bv-nombre', 'Lucas');
+  await ps.press('#bv-nombre', 'Enter');
+  await ps.waitForSelector('.seteo-opcion', { timeout: 15000 });
+  if (!/Lucas/.test(await ps.textContent('.seteo-pregunta'))) throw new Error('la primera pregunta no usa el nombre');
+  const elegir = async (o) => { await ps.click(`.seteo-opcion[data-opcion="${o}"]`); await ps.waitForTimeout(120); };
+  await elegir('historia');
+  await elegir('estudio');
+  if (!(await ps.isChecked('.seteo-casilla input'))) throw new Error('quien estudia no recibe la paralela marcada');
+  await elegir('RV1909');
+  await ps.click('.puerta-olvido'); // atrás: la respuesta anterior sigue marcada
+  if ((await ps.getAttribute('.seteo-opcion[data-opcion="RV1909"]', 'aria-pressed')) !== 'true') throw new Error('al volver se perdió la respuesta');
+  await elegir('RV1909');
+  await elegir('grande');
+  await elegir('noche');
+  await ps.waitForSelector('.seteo-resumen li');
+  const resumen = await ps.locator('.seteo-resumen li').allTextContents();
+  if (resumen.length < 5 || !resumen.some((l) => /Reina-Valera 1909, con la NTV/.test(l))) throw new Error('resumen: ' + resumen.join(' | '));
+  await ps.click('.seteo-entrar');
+  await ps.waitForSelector('.inicio .marca-grande', { timeout: 10000 });
+  const orden = await ps.locator('.inicio-entrada').allTextContents();
+  if (!/Historia/.test(orden[1])) throw new Error('Historia no quedó segunda: ' + orden.join(' | '));
+  await ps.click('.inicio-entrada >> nth=0');
+  await ps.waitForSelector('.texto .v', { timeout: 20000 });
+  const estado = await ps.evaluate(() => {
+    const r = document.documentElement;
+    return { tema: r.dataset.theme, letra: getComputedStyle(r).getPropertyValue('--f-texto'), tam: r.style.getPropertyValue('--tam-texto'), estudio: !!document.querySelector('.marco.con-estudio') };
+  });
+  if (estado.tema !== 'dark' || !/Atkinson/.test(estado.letra) || estado.tam !== '23px' || !estado.estudio) throw new Error(JSON.stringify(estado));
+});
+await ctxSeteo.close();
 
 console.log('pedidos a la API NTV/NLT simulada:', pedidosNLT);
 console.log(errores.length ? 'ERRORES:\n' + errores.join('\n') : 'Sin errores de consola.');
