@@ -4,7 +4,7 @@
   // De izquierda a derecha: volver, dónde estás, versión (y con cuál comparar), «Aa» (tamaño, tema, letra,
   // margen, Calma), escuchar el capítulo, ambiente, cinta y Estudio. Todo queda guardado en usuario.db.
   import Icono from './Icono.svelte';
-  import { ui, abrirVista, avisar } from '../lib/ui.svelte.js';
+  import { ui, abrirVista, avisar, volverAlEstante } from '../lib/ui.svelte.js';
   import { usuario, ajustar, alternarCinta } from '../lib/usuario.svelte.js';
   import { lista } from '../lib/biblia.js';
   import { LIBROS, nombreLibro } from '../lib/libros.js';
@@ -48,7 +48,7 @@
 </script>
 
 <div class="lector-barra" bind:this={barra}>
-  <button class="lb-volver" onclick={() => abrirVista('biblioteca')}><span aria-hidden="true">←</span> <span class="lb-texto">{t('lec.volver')}</span></button>
+  <button class="lb-volver" onclick={volverAlEstante}><span aria-hidden="true">←</span> <span class="lb-texto">{t('lec.volver')}</span></button>
 
   <div class="lb-lugar">
     <span class="lb-etiqueta">{t('lec.leyendo')}</span>

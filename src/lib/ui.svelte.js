@@ -27,6 +27,7 @@ export const ui = $state({
   leyendo: null,        // versículo que lee la voz
   destello: null,       // { libro, cap, v } a resaltar al llegar
   portada: 0,           // libro cuya portada se está mostrando a pantalla completa (0 = ninguna)
+  entrada: null,        // «Entrar al libro»: de qué cubierta sale la portada { libro, caja, color, titulo }
   busqueda: '',         // texto enviado desde la barra superior
   cap: { cargando: true, error: '', clave: '', versos: [], titulos: {}, paralelo: null, errorParalelo: '' },
 });
@@ -81,14 +82,89 @@ function conTransicion(destino, cambio) {
 export function abrirVista(v) {
   conTransicion(v, () => cambiarVista(v));
 }
-function cambiarVista(v) {
+function cambiarVista(v, arriba = true) {
   const antes = ui.vista;
   ui.menuBarra = null;
   if (v === 'laminas') ui.coleccion = null;
   if (v !== 'lector') { ui.seleccion = []; ui.navAbierta = false; }
   ui.vista = v;
   if (v === 'lector') estudioAlEntrar(antes);
-  if (typeof window !== 'undefined') requestAnimationFrame(() => document.querySelector('.vista')?.scrollTo?.(0, 0));
+  if (arriba && typeof window !== 'undefined') requestAnimationFrame(() => document.querySelector('.vista')?.scrollTo?.(0, 0));
+}
+
+// «Entrar al libro» (opción A, elegida por el dueño 2026-11-24). Al tocar una cubierta de la Biblioteca, esa misma
+// cubierta crece hasta ser la portada del libro y su título viaja hasta ser el primer renglón: el libro que tocas es
+// el libro en el que entras, sin corte. Al volver con «← Biblioteca», la página se achica de regreso a su cubierta.
+// Solo en Movimiento «Inmersivo» y sin «reducir movimiento»; si no, todo sigue como antes (Cristal y portada).
+// La portada (Portada.svelte) hace el crecimiento con los datos de ui.entrada y, cuando ya tapa la pantalla, llama a
+// llegarAlLibro(), que recién ahí cambia al lector (así no se ve el cambio de pantalla alrededor de la cubierta).
+const CURVA_LIBRO = 'cubic-bezier(.7,0,.2,1)';
+const inmersivo = () => typeof document !== 'undefined' && (document.documentElement.dataset.movimiento || 'inmersivo') === 'inmersivo'
+  && !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+const cajaComo = (r) => `translate(${r.left}px, ${r.top}px) scale(${r.width / innerWidth}, ${r.height / innerHeight})`;
+// color de fondo de un elemento; si es transparente (cubiertas de Imprenta y Editorial), el de la página
+const fondoDe = (el) => {
+  const c = getComputedStyle(el).backgroundColor;
+  return c === 'transparent' || c === 'rgba(0, 0, 0, 0)' ? getComputedStyle(document.documentElement).getPropertyValue('--fondo').trim() || '#f7f7f5' : c;
+};
+let pendiente = 0;
+
+export function entrarAlLibro(cubierta, libro) {
+  if (!cubierta || !inmersivo() || usuario.ajustes.portadas === false || ui.portada) return irA(libro, 1);
+  cubierta.style.transform = '';
+  const r = cubierta.getBoundingClientRect();
+  const tit = cubierta.querySelector('.cub-titulo');
+  const rt = tit.getBoundingClientRect();
+  const cs = getComputedStyle(tit);
+  const tam = parseFloat(cs.fontSize);
+  ui.entrada = {
+    libro,
+    caja: { left: r.left, top: r.top, width: r.width, height: r.height },
+    color: fondoDe(cubierta),
+    titulo: { left: rt.left, top: rt.top, texto: tit.textContent, font: cs.font, espaciado: cs.letterSpacing, color: cs.color,
+      mayusculas: cs.textTransform, tam, interlinea: (parseFloat(cs.lineHeight) || tam * 1.1) / tam },
+  };
+  cubierta.classList.add('entrando');
+  pendiente = libro;
+  ui.portada = libro;
+  setTimeout(llegarAlLibro, 1100); // respaldo: si la portada no avisa, igual se llega al libro
+}
+
+export function llegarAlLibro() {
+  if (!pendiente) return;
+  const libro = pendiente;
+  pendiente = 0;
+  irAhora(libro, 1, null);
+}
+
+export function volverAlEstante() {
+  const libro = pos().libro;
+  const marco = document.querySelector('.marco'); // el lector (texto y estudio), debajo de la cabecera
+  if (!inmersivo() || ui.vista !== 'lector' || !marco) return abrirVista('biblioteca');
+  // la página del lector, de su color, se queda encima mientras cambia la pantalla debajo
+  const lienzo = document.createElement('div');
+  lienzo.className = 'lienzo-libro';
+  const desde = marco.getBoundingClientRect();
+  const color = fondoDe(document.querySelector('.lector') || marco);
+  lienzo.style.background = color;
+  lienzo.style.transform = cajaComo(desde);
+  document.body.append(lienzo);
+  flushSync(() => cambiarVista('biblioteca', false));
+  const cub = document.querySelector(`.cubierta[data-libro="${libro}"]`);
+  const terminar = () => lienzo.remove();
+  if (!cub) {
+    lienzo.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 260, fill: 'both' }).finished.then(terminar, terminar);
+    return;
+  }
+  cub.scrollIntoView({ block: 'center' });
+  const r = cub.getBoundingClientRect();
+  cub.classList.add('entrando');
+  lienzo.animate([{ transform: cajaComo(desde), backgroundColor: color }, { transform: cajaComo(r), backgroundColor: fondoDe(cub) }],
+    { duration: 520, easing: CURVA_LIBRO, fill: 'both' }).finished.then(() => {
+    cub.classList.remove('entrando');
+    [...cub.children].forEach((el) => el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 220, easing: 'ease-out' }));
+    terminar();
+  }, terminar);
 }
 
 export function irA(libro, cap, v = null) {

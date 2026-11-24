@@ -1,4 +1,4 @@
-# Chi-Ro Heirs
+# Aleph
 
 Lector bíblico personal, ligero y local. Tiene la NTV y la NLT desde la API oficial de Tyndale, 15 versiones libres (dominio público o Creative Commons) que funcionan sin conexión, subrayado, notas enlazadas, estudio de palabras, referencias cruzadas, memorización y pósteres de versículos.
 
@@ -19,7 +19,7 @@ Se actualiza sola cada vez que cambia `main` (tarda 2 o 3 minutos). La primera v
 
 1. Entra al repositorio en GitHub → **Releases** → la versión más reciente.
 2. En «Assets», descarga:
-   - **Mac:** el archivo `.dmg`. Ábrelo y arrastra **Chi-Ro Heirs** a Aplicaciones.
+   - **Mac:** el archivo `.dmg`. Ábrelo y arrastra **Aleph** a Aplicaciones.
    - **Windows:** el archivo `…-setup.exe`.
 3. **La primera vez**, el sistema avisa de que la app no está firmada por un desarrollador registrado (firmar cuesta 99 USD al año en Apple y es opcional para uso personal):
    - **Mac:** haz clic derecho sobre la app → **Abrir** → **Abrir**. Si no aparece esa opción, ve a Ajustes del Sistema → Privacidad y seguridad → «Abrir igualmente».

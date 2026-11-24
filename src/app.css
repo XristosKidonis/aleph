@@ -286,6 +286,13 @@ img { display: block; max-width: 100%; }
 .cubierta.firma:nth-child(6n+2) { background: #eaeae8; }
 .cubierta.firma:nth-child(6n+3) { background: #e3e3e0; }
 .cubierta:hover { background: #dededb; transform: translateY(-2px); }
+/* inclinada hacia el mouse (Biblioteca.svelte, «Inmersivo»): el giro lo pinta el código cuadro a cuadro, sin
+   transición encima; una luz suave sigue al mouse sin tocar el texto */
+.cubierta[style*="perspective"] { transition: background-color 0.24s ease; }
+.cubierta::after { content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0; transition: opacity 0.3s ease;
+  background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 58%); }
+.cubierta.inclinada::after { opacity: 1; }
+:root[data-skin] .cubierta::after { display: none; }
 .cub-num, .cub-tipo, .cub-monograma, .cub-familia, .cub-titulo { position: relative; z-index: 1; }
 .cub-num { font: 500 10px var(--f-ui); letter-spacing: 0.04em; color: var(--tenue); font-variant-numeric: tabular-nums; }
 .cub-titulo { font: 450 clamp(30px, 3.7vw, 62px)/1.02 var(--f-display); letter-spacing: -0.068em; color: #232323; overflow-wrap: anywhere; hyphens: auto; max-width: 100%;
@@ -440,6 +447,19 @@ button.lb-menu-fila:hover { color: var(--tinta); }
 @media (max-width: 600px) {
   .pt-nota { width: 38vw; font-size: 10.5px; letter-spacing: 0.03em; }
 }
+/* «Entrar al libro» (Biblioteca → portada, opción A): la cubierta tocada crece hasta ser la portada. El fondo de la
+   portada pasa a un lienzo que parte del tamaño de la cubierta; el grano y el marco (Imprenta) llegan con él. Es un
+   <span> para no correr los :nth-of-type de los renglones. */
+.portada.desde { background: none; }
+.portada.desde::after { display: none !important; }
+.portada.desde::before { opacity: 0; transition: opacity 0.3s ease; }
+.portada.desde.llena::before { opacity: 1; }
+.pt-lienzo { position: absolute; left: 0; top: 0; width: 100vw; height: 100vh; z-index: -1; transform-origin: 0 0; background: var(--pt-azul); will-change: transform; }
+:root[data-skin] .pt-lienzo::after { content: ''; position: absolute; inset: 0; mix-blend-mode: overlay; opacity: 0.45; background: url(/img/portada-grano.webp) 0 0 / 512px 512px; }
+.pt-vuelo { position: fixed; z-index: 3; margin: 0; white-space: nowrap; transform-origin: 0 0; pointer-events: none; }
+/* al volver: la página del lector se achica de regreso a su cubierta */
+.lienzo-libro { position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; z-index: 190; transform-origin: 0 0; pointer-events: none; }
+.cubierta.entrando > * { visibility: hidden; }
 
 .frontis { margin: 0 auto; max-width: 1180px; padding: 0 var(--margen); container-type: inline-size; }
 .frontis-lamina { position: relative; height: min(70vh, 820px); min-height: 340px; overflow: hidden; background: #0b0a09; }
