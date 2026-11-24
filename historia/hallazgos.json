@@ -3,6 +3,43 @@
   "actualizado": "2026-11-23",
   "hallazgos": [
     {
+      "id": "campamento-legio-x",
+      "publicado": "2026-11-23",
+      "grupo": "piedras",
+      "grado": "discutido",
+      "titulo": { "es": "¿El campamento de la legión que vigiló Jerusalén en ruinas? Una esquina de muro lo sugiere", "en": "The camp of the legion that guarded ruined Jerusalem? A wall corner hints at it" },
+      "autor": { "es": "Shimon Gibson (Universidad de Carolina del Norte en Charlotte), con hallazgos de la excavación de Magen Broshi, 1975-1978", "en": "Shimon Gibson (University of North Carolina at Charlotte), using finds from Magen Broshi's 1975-1978 excavation" },
+      "obra": { "es": "Dos muros en esquina y un camino junto a la muralla oeste de la Ciudad Vieja, al sur de la Ciudadela · Jerusalén", "en": "Two walls forming a corner and a road beside the western wall of the Old City, south of the Citadel · Jerusalem" },
+      "fecha": { "es": "entre el 70 y el 130 d. C., según el autor", "en": "between AD 70 and 130, according to the author" },
+      "cita": {
+        "es": "Dos muros que forman una esquina, levantados encima de una torre derribada en el año 70, y al lado un camino bordeado con piedras sacadas de la muralla caída.",
+        "en": "Two walls forming a corner, built on top of a tower torn down in AD 70, and beside them a road edged with stones taken from the fallen city wall."
+      },
+      "establece": {
+        "es": "Que junto a la muralla oeste de Jerusalén hay muros y un camino construidos después del año 70 sobre la muralla derribada, con sus mismas piedras y con cerámica de antes del año 130 aproximadamente. Encaja con lo que cuenta Josefo: Tito arrasó la ciudad y dejó en pie solo tres torres y un tramo del muro oeste como campamento de la Legión X, la Jerusalén pisada por extranjeros que Jesús anuncia en Lucas 21.",
+        "en": "That beside Jerusalem's western wall there are walls and a road built after AD 70 on top of the demolished city wall, reusing its stones, with pottery from before roughly AD 130. It fits what Josephus tells: Titus razed the city and left standing only three towers and a stretch of the western wall as a camp for the Tenth Legion, the Jerusalem trampled by foreigners that Jesus foretells in Luke 21."
+      },
+      "noEstablece": {
+        "es": "Que esos restos sean del campamento es la propuesta de un solo investigador, recién publicada: otros especialistas lo ubican en otras partes de la ciudad, y alguno duda de que queden restos que encontrar. El plano completo, un cuadrado de unos 285 metros por lado, es una reconstrucción, y el propio autor dice que hará falta excavar para confirmarlo.",
+        "en": "That these remains belong to the camp is one researcher's proposal, just published: other specialists place the camp elsewhere in the city, and some doubt any remains are left to find. The full plan, a square about 285 meters on each side, is a reconstruction, and the author himself says excavation will be needed to confirm it."
+      },
+      "versos": ["42.19.41-44", "42.21.20-24"],
+      "fuente": "https://doi.org/10.1017/S1047759426100944",
+      "noticia": "https://www.haaretz.com/archaeology/2026-11-23/ty-article-magazine/archaeologist-deduces-location-of-lost-roman-legion-camp-in-jerusalem/000001a2-07fa-d1da-a3fb-4ffefe870000",
+      "imagen": {
+        "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Stamp-Impressions_of_the_Legio_X_Fretensis-Round.jpg/1280px-Stamp-Impressions_of_the_Legio_X_Fretensis-Round.jpg",
+        "titulo": { "es": "Sello redondo de la Legión X Fretensis, hallado en Givat Ram, Jerusalén", "en": "Round stamp of the Legio X Fretensis, found at Givat Ram, Jerusalem" },
+        "autor": "Foto: אור פ · Centro Internacional de Convenciones, Jerusalén",
+        "fecha": "después del 130 d. C. · foto 2009",
+        "licencia": "Dominio público",
+        "pagina": "https://commons.wikimedia.org/wiki/File:Stamp-Impressions_of_the_Legio_X_Fretensis-Round.jpg"
+      },
+      "pregunta": {
+        "texto": { "es": "Encontraron el campamento de la legión romana que se quedó en Jerusalén tras destruirla.", "en": "They found the camp of the Roman legion that stayed in Jerusalem after destroying it." },
+        "respuesta": "discutido"
+      }
+    },
+    {
       "id": "cilindro-ciro",
       "publicado": "2026-11-23",
       "grupo": "testigos",
