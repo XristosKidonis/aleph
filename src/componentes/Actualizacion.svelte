@@ -7,7 +7,7 @@
 {#if !act.oculta && (act.estado === 'hay' || act.estado === 'bajando' || act.estado === 'reiniciando')}
   <div class="actualizacion" role="status" aria-live="polite">
     <span class="etiqueta-ui">{t('act.nueva')}</span>
-    <p class="act-version">Chi-Ro Heirs {act.version}{act.actual ? ` · ${t('act.tienes', { v: act.actual })}` : ''}</p>
+    <p class="act-version">Aleph {act.version}{act.actual ? ` · ${t('act.tienes', { v: act.actual })}` : ''}</p>
     {#if act.estado === 'hay'}
       <div class="fila-botones">
         <button class="boton" onclick={instalarActualizacion}>{t('act.instalar')}</button>

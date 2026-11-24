@@ -18,7 +18,7 @@ jobs:
     if: inputs.que == 'historia'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Commons (candidatos para la sección Historia, con su licencia)
         run: python3 herramientas/traer_imagenes_historia.py
@@ -37,7 +37,7 @@ jobs:
     if: inputs.que == 'voces'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Hugging Face (fichas y modelos de voces Piper)
         run: python3 herramientas/traer_voces.py
@@ -56,7 +56,7 @@ jobs:
     if: inputs.que == 'musica'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Commons (grabaciones para el Ambiente, con su licencia)
         run: python3 herramientas/traer_musica.py
@@ -75,7 +75,7 @@ jobs:
     if: inputs.que != 'historia' && inputs.que != 'musica' && inputs.que != 'voces'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Gutenberg (Doré Bible Gallery, completo)
         run: |

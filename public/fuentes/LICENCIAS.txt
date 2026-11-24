@@ -2,5 +2,10 @@ Todas las fuentes de esta carpeta usan la licencia SIL Open Font License 1.1 (OF
 obtenidas de los paquetes @fontsource y @fontsource-variable en npm:
 Inter Tight (variable), DM Sans (variable), Literata, Atkinson Hyperlegible Next, Noto Serif Hebrew,
 y para dibujar las láminas: Archivo, Fraunces, Pinyon Script.
-Bodoni Moda y los cortes estáticos de Inter Tight se conservan para herramientas/instalador.mjs.
+Las imágenes de los instaladores y de la marca (herramientas/instalador.mjs y marca.mjs) usan las variables
+de Inter Tight y DM Sans.
 https://openfontlicense.org
+
+Excepción: texgyreheros-bold.woff2 y texgyreheros-regular.woff2 (portadas y skin Editorial) son TeX Gyre Heros Bold y Regular 2.004 de GUST
+(https://www.gust.org.pl/projects/e-foundry/tex-gyre/heros), bajo la GUST Font License, que permite
+usarla y redistribuirla. Solo se cambió el formato del archivo (OTF a WOFF2); los glifos y nombres son los originales.

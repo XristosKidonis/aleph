@@ -1,0 +1,114 @@
+{
+  "version": 1,
+  "actualizado": "2026-11-23",
+  "hallazgos": [
+    {
+      "id": "cilindro-ciro",
+      "publicado": "2026-11-23",
+      "grupo": "testigos",
+      "grado": "probable",
+      "titulo": { "es": "El Cilindro de Ciro: el rey que dejó volver a los deportados", "en": "The Cyrus Cylinder: the king who let the deported go home" },
+      "autor": { "es": "Ciro el Grande, rey de Persia", "en": "Cyrus the Great, king of Persia" },
+      "obra": { "es": "Cilindro de barro en acadio, hallado en Babilonia en 1879 · Museo Británico", "en": "Clay cylinder in Akkadian, found in Babylon in 1879 · British Museum" },
+      "fecha": { "es": "poco después del 539 a. C.", "en": "shortly after 539 BC" },
+      "cita": {
+        "es": "«Devolví a sus santuarios a los dioses que habitaban en ellos […]. Reuní a todos sus habitantes y les devolví sus moradas.»",
+        "en": "“I returned the gods who dwelt in them to their sanctuaries […]. I gathered all their inhabitants and returned to them their dwellings.”"
+      },
+      "establece": {
+        "es": "Que Ciro, al conquistar Babilonia, se presentó como el rey que devolvía a los pueblos deportados a su tierra y les dejaba restaurar sus templos. Es la misma política que Esdras 1 describe para los judíos y Jerusalén.",
+        "en": "That Cyrus, on conquering Babylon, presented himself as the king who sent deported peoples home and let them restore their temples. It is the same policy Ezra 1 describes for the Jews and Jerusalem."
+      },
+      "noEstablece": {
+        "es": "No nombra a los judíos ni a Jerusalén: las ciudades que menciona están en Mesopotamia y sus alrededores. Hace creíble el decreto de Esdras, pero no es ese decreto. Y es propaganda real: Ciro se pinta como elegido del dios Marduk.",
+        "en": "It does not name the Jews or Jerusalem: the cities it lists are in and around Mesopotamia. It makes Ezra’s decree believable, but it is not that decree. And it is royal propaganda: Cyrus casts himself as chosen by the god Marduk."
+      },
+      "versos": ["15.1.1-4", "14.36.22-23", "23.45.1"],
+      "fuente": "https://www.britishmuseum.org/collection/object/W_1880-0617-1941",
+      "imagen": {
+        "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Cyrus_Cylinder.jpg/1280px-Cyrus_Cylinder.jpg",
+        "titulo": { "es": "El Cilindro de Ciro", "en": "The Cyrus Cylinder" },
+        "autor": "Foto: Mike Peel · Museo Británico",
+        "fecha": "c. 539 a. C. · foto 2010",
+        "licencia": "CC BY-SA 4.0",
+        "pagina": "https://commons.wikimedia.org/wiki/File:Cyrus_Cylinder.jpg"
+      },
+      "pregunta": {
+        "texto": { "es": "El Cilindro de Ciro menciona a los judíos y su regreso a Jerusalén.", "en": "The Cyrus Cylinder mentions the Jews and their return to Jerusalem." },
+        "respuesta": "falso"
+      }
+    },
+    {
+      "id": "ketef-hinnom",
+      "publicado": "2026-11-23",
+      "grupo": "piedras",
+      "grado": "firme",
+      "titulo": { "es": "Ketef Hinnom: la bendición de Números 6 en dos rollitos de plata", "en": "Ketef Hinnom: the blessing of Numbers 6 on two tiny silver scrolls" },
+      "autor": { "es": "Ketef Hinnom, Jerusalén · excavación de Gabriel Barkay, 1979", "en": "Ketef Hinnom, Jerusalem · excavated by Gabriel Barkay, 1979" },
+      "obra": { "es": "Dos amuletos de plata enrollados, con texto en hebreo antiguo · Museo de Israel", "en": "Two rolled silver amulets inscribed in ancient Hebrew · Israel Museum" },
+      "fecha": { "es": "fines del siglo VII o inicios del VI a. C.", "en": "late 7th or early 6th century BC" },
+      "cita": {
+        "es": "«Te bendiga YHWH y te guarde; haga brillar YHWH su rostro sobre ti y te dé paz.»",
+        "en": "“May YHWH bless you and keep you; may YHWH make his face shine upon you and give you peace.”"
+      },
+      "establece": {
+        "es": "Que la bendición sacerdotal de Números 6:24-26 ya se recitaba en Jerusalén antes de que los babilonios destruyeran la ciudad en el 586 a. C. Son las palabras de la Biblia más antiguas que se conservan, más de tres siglos anteriores a los rollos del Mar Muerto.",
+        "en": "That the priestly blessing of Numbers 6:24-26 was already recited in Jerusalem before the Babylonians destroyed the city in 586 BC. They are the oldest surviving words of the Bible, more than three centuries older than the Dead Sea Scrolls."
+      },
+      "noEstablece": {
+        "es": "Que el libro de Números ya existiera completo tal como lo leemos. Es una bendición que se llevaba al cuello como amuleto; prueba que el texto circulaba, no cómo era el libro entero. La fecha se afinó con fotografía de alta resolución en 2004.",
+        "en": "That the book of Numbers already existed in full as we read it. It is a blessing worn around the neck as an amulet; it proves the text was in use, not what the whole book looked like. The date was refined with high-resolution imaging in 2004."
+      },
+      "versos": ["4.6.24-26"],
+      "fuente": "https://doi.org/10.2307/4150106",
+      "imagen": {
+        "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Ketef_Hinnom_KH2_Scroll.svg/1280px-Ketef_Hinnom_KH2_Scroll.svg.png",
+        "titulo": { "es": "Dibujo del texto del amuleto KH2", "en": "Drawing of the text of amulet KH2" },
+        "autor": "Editor B",
+        "fecha": "c. 600 a. C. · dibujo",
+        "licencia": "CC BY 4.0",
+        "pagina": "https://commons.wikimedia.org/wiki/File:Ketef_Hinnom_KH2_Scroll.svg"
+      },
+      "pregunta": {
+        "texto": { "es": "Las palabras de la Biblia más antiguas que se conservan son una bendición grabada en dos rollitos de plata.", "en": "The oldest surviving words of the Bible are a blessing inscribed on two tiny silver scrolls." },
+        "respuesta": "firme"
+      }
+    },
+    {
+      "id": "tel-dan",
+      "publicado": "2026-11-23",
+      "grupo": "piedras",
+      "grado": "firme",
+      "titulo": { "es": "La estela de Tel Dan: «la casa de David»", "en": "The Tel Dan stele: “the House of David”" },
+      "autor": { "es": "Tel Dan, norte de Israel · equipo de Avraham Biran, 1993 y 1994", "en": "Tel Dan, northern Israel · Avraham Biran’s team, 1993 and 1994" },
+      "obra": { "es": "Fragmentos de una estela de victoria en arameo, en basalto · Museo de Israel", "en": "Fragments of a victory stele in Aramaic, in basalt · Israel Museum" },
+      "fecha": { "es": "c. 840 a. C.", "en": "c. 840 BC" },
+      "cita": {
+        "es": "«[Maté a Jo]ram hijo de [Acab], rey de Israel, y maté a [Ocoz]ías hijo de [Joram, re]y de la casa de David.»",
+        "en": "“[I killed Jo]ram son of [Ahab], king of Israel, and I killed [Ahaz]iah son of [Joram, kin]g of the House of David.”"
+      },
+      "establece": {
+        "es": "Que unos 150 años después de David, un rey enemigo de Aram (casi seguro Hazael) llamaba al reino de Judá «la casa de David». Es la primera mención segura de David fuera de la Biblia, y como el rey que dio nombre a la dinastía.",
+        "en": "That some 150 years after David, an enemy king of Aram (almost certainly Hazael) called the kingdom of Judah “the House of David”. It is the first secure mention of David outside the Bible, as the king who gave the dynasty its name."
+      },
+      "noEstablece": {
+        "es": "Nada sobre la vida de David ni el tamaño de su reino. Los nombres entre corchetes están reconstruidos. Y hay un choque con la Biblia: la estela se atribuye estas dos muertes, mientras 2 Reyes 9 se las atribuye a Jehú.",
+        "en": "Nothing about David’s life or the size of his kingdom. The names in brackets are reconstructed. And there is a clash with the Bible: the stele claims these two deaths, while 2 Kings 9 credits them to Jehu."
+      },
+      "versos": ["10.7.16", "12.8.28-29", "12.9.24-27"],
+      "fuente": "https://artsandculture.google.com/asset/house-of-david-inscribed-on-a-victory-stele-unknown/YAGtlBR_7SLNYg",
+      "imagen": {
+        "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/JRSLM_300116_Tel_Dan_Stele_01.jpg/1280px-JRSLM_300116_Tel_Dan_Stele_01.jpg",
+        "titulo": { "es": "La estela de Tel Dan en el Museo de Israel", "en": "The Tel Dan stele at the Israel Museum" },
+        "autor": "Foto: Oren Rozen · Museo de Israel",
+        "fecha": "c. 840 a. C. · foto 2016",
+        "licencia": "CC BY-SA 4.0",
+        "pagina": "https://commons.wikimedia.org/wiki/File:JRSLM_300116_Tel_Dan_Stele_01.jpg"
+      },
+      "pregunta": {
+        "texto": { "es": "Fuera de la Biblia no hay ninguna inscripción antigua que nombre al rey David.", "en": "No ancient inscription outside the Bible names King David." },
+        "respuesta": "falso"
+      }
+    }
+  ]
+}

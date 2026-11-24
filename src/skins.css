@@ -1,0 +1,255 @@
+/* Aleph · skins
+   Una capa encima del diseño base (app.css), que sigue siendo el skin «Blanco» por defecto.
+   Se activa con <html data-skin="imprenta|editorial">. Reglas que comparten los dos:
+   - un solo color además del papel y la tinta; decisiones extremas: si hay color, es la pantalla entera;
+   - líneas finas (1–1,5 px), sin cajas alrededor de cada cosa;
+   - el texto bíblico siempre sobre papel (claro u oscuro), nunca sobre el color del skin.
+   La portada de libro de cada skin está al final, junto con la nueva del Blanco. */
+
+@font-face { font-family: 'Archivo Var'; font-weight: 100 900; font-stretch: 62% 125%; font-display: swap; src: url(/fuentes/archivo-latin-variable.woff2) format('woff2'); }
+@font-face { font-family: 'Heros'; font-weight: 400; font-display: swap; src: url(/fuentes/texgyreheros-regular.woff2) format('woff2'); }
+
+/* =====================================================================================
+   IMPRENTA · papel crema, tinta negra y un color: amarillo, celeste o menta (Ajustes → Color). Títulos en Archivo condensada.
+   ===================================================================================== */
+:root[data-skin="imprenta"]:not([data-theme="dark"]) {
+  --fondo: #F4F1EA; --superficie: #EBE7DD; --superficie-2: #E2DDD0;
+  --tinta: #161616; --tinta-2: #3A3833; --tenue: #5C584F; --decorado: #8F8A7E; --linea: #CBC5B6;
+  --acento: #161616; --acento-suave: rgba(22, 22, 22, 0.07); --sobre-acento: #F4F1EA;
+  --seleccion: #E9E4D6; --m-oro: color-mix(in srgb, var(--imp-color) 62%, transparent);
+}
+:root[data-skin="imprenta"] {
+  /* el color del skin (Ajustes → Color) y los grises que lo acompañan cuando es el fondo */
+  --imp-color: #F2CE2E; --imp-t2: #2E2C25; --imp-tenue: #4A4636; --imp-deco: #5C584F;
+  --imp-cn: 'Archivo Var', 'Archivo Condensada', 'Inter Tight', sans-serif;
+  --f-ui: 'Archivo Var', 'DM Sans', sans-serif;
+  --f-display: 'Archivo Var', 'Inter Tight', sans-serif;
+}
+:root[data-skin="imprenta"][data-color="celeste"] { --imp-color: #A9D8F0; --imp-t2: #2B3135; --imp-tenue: #3B474D; --imp-deco: #4B5C64; }
+:root[data-skin="imprenta"][data-color="menta"] { --imp-color: #A9E2C0; --imp-t2: #2B332E; --imp-tenue: #3B4941; --imp-deco: #4B5F53; }
+:root[data-skin="imprenta"][data-theme="dark"] {
+  --fondo: #121211; --superficie: #1C1C1A; --superficie-2: #272724;
+  --tinta: #ECE8DD; --tinta-2: #CFCABD; --tenue: #A29D90; --decorado: #6D695F; --linea: #34332F;
+  --acento: #ECE8DD; --sobre-acento: #121211; --seleccion: #272724; --m-oro: color-mix(in srgb, var(--imp-color) 42%, transparent);
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-skin="imprenta"]:not([data-theme]) {
+    --fondo: #121211; --superficie: #1C1C1A; --superficie-2: #272724;
+    --tinta: #ECE8DD; --tinta-2: #CFCABD; --tenue: #A29D90; --decorado: #6D695F; --linea: #34332F;
+    --acento: #ECE8DD; --sobre-acento: #121211; --seleccion: #272724; --m-oro: color-mix(in srgb, var(--imp-color) 42%, transparent);
+  }
+}
+/* la condensada: siempre los mismos valores */
+:root[data-skin="imprenta"] :is(.titular h1, .cap-titulo, .inicio-entrada,
+  .inicio-ultima button, .inicio-saludo, .puerta-hola, .puerta-entrar, .cub-titulo, .col-nombre, .archivo-vacio h2, .lb-capitulo, .his-grupo span) {
+  font-family: var(--imp-cn); font-stretch: 68%; font-weight: 760; text-transform: uppercase; letter-spacing: 0;
+}
+/* el marco fino que firma cada página (no en pantallas chicas) */
+@media (min-width: 761px) {
+  :root[data-skin="imprenta"] body::after { content: ""; position: fixed; inset: 12px; border: 1.5px solid var(--tinta); pointer-events: none; z-index: 150; }
+}
+
+/* cabecera */
+:root[data-skin="imprenta"] .marca .marca-logo { height: 32px; transform: translateY(4px); } /* la apilada no toca el marco */
+:root[data-skin="imprenta"] .cab-link { font: 500 11px var(--f-ui); letter-spacing: 0.09em; text-transform: uppercase; color: var(--tinta-2); }
+:root[data-skin="imprenta"] .cab-link.activa::after { height: 2px; bottom: 6px; }
+:root[data-skin="imprenta"] .sobretitulo, :root[data-skin="imprenta"] .cap-sobre { letter-spacing: 0.12em; color: var(--tinta-2); }
+
+/* inicio: la única pantalla entera en el color del skin */
+:root[data-skin="imprenta"] :is(.inicio, .candado) { --tinta: #161616; --tinta-2: var(--imp-t2); --tenue: var(--imp-tenue); --decorado: var(--imp-deco);
+  background: var(--imp-color); color: var(--tinta); align-items: stretch; justify-content: stretch; padding: clamp(40px, 6vh, 64px) clamp(36px, 4.4vw, 76px) 92px; }
+:root[data-skin="imprenta"] .candado { align-items: center; padding: 0 clamp(36px, 9vw, 160px); }
+:root[data-skin="imprenta"] .inicio-centro { width: 100%; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); grid-template-rows: auto 1fr auto auto; column-gap: clamp(28px, 4vw, 70px); align-items: start; }
+:root[data-skin="imprenta"] .inicio-edicion { display: none; }
+:root[data-skin="imprenta"] .inicio .marca-grande { grid-column: 1; grid-row: 1; margin: 0; align-items: flex-start; text-align: left; gap: 0; }
+:root[data-skin="imprenta"] .inicio .marca-grande .marca-horizontal { height: auto; width: 100%; max-height: 40vh; }
+:root[data-skin="imprenta"] .inicio-entradas { grid-column: 2; grid-row: 1; width: 100%; gap: 0; border-top: 1px solid var(--tinta); }
+:root[data-skin="imprenta"] .inicio-entrada { grid-template-columns: 54px minmax(0, 1fr) 22px; padding: 9px 0 7px; border-bottom: 1px solid var(--tinta); font-size: clamp(28px, min(3.3vw, 5.2vh), 48px); line-height: 1.02; }
+:root[data-skin="imprenta"] .inicio-entrada:hover { color: var(--tinta); transform: none; background: rgba(255, 255, 255, 0.22); }
+:root[data-skin="imprenta"] .inicio-num { font: 600 11px var(--f-ui); color: var(--tinta); letter-spacing: 0.08em; }
+:root[data-skin="imprenta"] .inicio-flecha { color: var(--tinta); }
+:root[data-skin="imprenta"] .inicio-ultima { grid-column: 1 / -1; grid-row: 3; width: 100%; margin: 28px 0 0; font: 500 11px/1.4 var(--f-ui); letter-spacing: 0.09em; text-transform: uppercase; color: var(--tinta-2); }
+:root[data-skin="imprenta"] .inicio-ultima button { display: block; margin: 8px 0 0; padding: 0; border: 0; color: var(--tinta); font-size: clamp(72px, min(12vw, 19vh), 220px); line-height: 0.86; }
+:root[data-skin="imprenta"] .inicio-ultima:not(.inicio-empezar) button::after { content: " →"; font-weight: 400; }
+:root[data-skin="imprenta"] .inicio-empezar button { font-size: clamp(40px, min(6vw, 10vh), 96px); }
+:root[data-skin="imprenta"] .inicio-empezar small { text-transform: none; letter-spacing: 0; font-size: 13px; }
+:root[data-skin="imprenta"] .inicio-recuerdo { grid-row: 4; margin-top: 14px; }
+:root[data-skin="imprenta"] .inicio-cultura { display: none; }
+:root[data-skin="imprenta"] .inicio-saludo { margin-bottom: 14px; font-size: clamp(22px, 2.4vw, 34px); line-height: 1; }
+:root[data-skin="imprenta"] .puerta-hola { font-size: clamp(56px, 8vw, 128px); line-height: 0.86; }
+:root[data-skin="imprenta"] .puerta-entrar { font-size: 20px; }
+:root[data-skin="imprenta"] .puerta-campo input { font: 700 28px var(--imp-cn); font-stretch: 68%; text-transform: uppercase; letter-spacing: 0.01em; }
+:root[data-skin="imprenta"] .inicio-firma { color: var(--tinta-2); font-family: var(--f-ui); bottom: 34px; }
+
+/* títulos de página y lector */
+:root[data-skin="imprenta"] .titular h1 { font-size: clamp(64px, 9vw, 132px); line-height: 0.86; }
+:root[data-skin="imprenta"] .cap-titulo { font-size: clamp(72px, 10vw, 150px); line-height: 0.86; }
+:root[data-skin="imprenta"] .cap-titulo em { color: inherit; font-weight: inherit; }
+:root[data-skin="imprenta"] .cap-filete { width: 100%; background: var(--tinta); margin-top: 26px; }
+:root[data-skin="imprenta"] .texto .num { font: 700 13px var(--imp-cn); font-stretch: 68%; color: var(--tinta); }
+:root[data-skin="imprenta"] .lb-capitulo { font-size: 22px; }
+:root[data-skin="imprenta"] .lb-capitulo span { color: inherit; font-weight: inherit; }
+:root[data-skin="imprenta"] .filtro[aria-pressed="true"], :root[data-skin="imprenta"] .filtro[aria-selected="true"] { box-shadow: inset 0 -2px 0 var(--tinta); }
+
+/* =====================================================================================
+   EDITORIAL · se llega en su color (lima, rosa o cian), se lee en blanco o en negro con ese color. Todo en Heros.
+   ===================================================================================== */
+:root[data-skin="editorial"]:not([data-theme="dark"]) {
+  --fondo: #FAFAF7; --superficie: #F0F0EC; --superficie-2: #E6E6E1;
+  --tinta: #111111; --tinta-2: #3C3C39; --tenue: #5F5F5B; --decorado: #9A9A95; --linea: #DCDCD6;
+  --acento: #111111; --acento-suave: rgba(17, 17, 17, 0.06); --sobre-acento: #FAFAF7;
+  --seleccion: var(--ed-sel); --m-oro: color-mix(in srgb, var(--ed-color) 85%, transparent);
+}
+:root[data-skin="editorial"] {
+  /* el color del skin (Ajustes → Color) y los tonos de las pantallas que se pintan enteras con él */
+  --ed-color: #D8F24A; --ed-sup: #CCE53F; --ed-sup2: #C2DA38; --ed-t2: #2A2E10; --ed-tenue: #454D14; --ed-deco: #5F6A1C;
+  --ed-linea: #A9BF33; --ed-sel: #EEF6C8;
+  --f-ui: 'Heros', 'Helvetica Neue', Arial, sans-serif;
+  --f-display: 'Heros', 'Helvetica Neue', Arial, sans-serif;
+}
+:root[data-skin="editorial"][data-color="rosa"] { --ed-color: #FDD0E0; --ed-sup: #EFC5D4; --ed-sup2: #E5BDCB; --ed-t2: #322C2E;
+  --ed-tenue: #514549; --ed-deco: #6B5A60; --ed-linea: #C9A6B2; --ed-sel: #FCE3EA; }
+:root[data-skin="editorial"][data-color="cian"] { --ed-color: #B9E8F0; --ed-sup: #AFDBE3; --ed-sup2: #A8D3DA; --ed-t2: #292F30;
+  --ed-tenue: #3E4B4D; --ed-deco: #516366; --ed-linea: #94B9BF; --ed-sel: #D6F0F3; }
+:root[data-skin="editorial"][data-theme="dark"] {
+  --fondo: #0E0E0E; --superficie: #1A1A19; --superficie-2: #252524;
+  --tinta: #ECEBE6; --tinta-2: #CFCEC8; --tenue: #9A9A94; --decorado: #5E5E5A; --linea: #2E2E2C;
+  --acento: #ECEBE6; --sobre-acento: #0E0E0E; --seleccion: #252524; --m-oro: color-mix(in srgb, var(--ed-color) 38%, transparent);
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-skin="editorial"]:not([data-theme]) {
+    --fondo: #0E0E0E; --superficie: #1A1A19; --superficie-2: #252524;
+    --tinta: #ECEBE6; --tinta-2: #CFCEC8; --tenue: #9A9A94; --decorado: #5E5E5A; --linea: #2E2E2C;
+    --acento: #ECEBE6; --sobre-acento: #0E0E0E; --seleccion: #252524; --m-oro: color-mix(in srgb, var(--ed-color) 38%, transparent);
+  }
+}
+/* las pantallas para llegar y elegir, enteras en el color del skin (el lector y los diálogos quedan en blanco) */
+:root[data-skin="editorial"] :is(.inicio, .candado, .app:not([data-vista="lector"])) {
+  --fondo: var(--ed-color); --superficie: var(--ed-sup); --superficie-2: var(--ed-sup2);
+  --tinta: #111111; --tinta-2: var(--ed-t2); --tenue: var(--ed-tenue); --decorado: var(--ed-deco); --linea: var(--ed-linea);
+  background: var(--fondo); color: var(--tinta);
+}
+:root[data-skin="editorial"] :is(.titular h1, .cap-titulo, .inicio-ultima button, .inicio-saludo, .puerta-hola, .col-nombre, .archivo-vacio h2) {
+  font-family: var(--f-display); font-weight: 700; letter-spacing: -0.07em;
+}
+:root[data-skin="editorial"] .cab-link { font: 400 13px var(--f-ui); letter-spacing: -0.01em; color: var(--tinta-2); }
+:root[data-skin="editorial"] .cab-link.activa::after { height: 4px; bottom: 5px; background: var(--ed-color); }
+:root[data-skin="editorial"] .app:not([data-vista="lector"]) .cab-link.activa::after { background: var(--tinta); height: 2px; }
+:root[data-skin="editorial"] .sobretitulo, :root[data-skin="editorial"] .cap-sobre { letter-spacing: 0.1em; font-weight: 400; color: var(--tinta-2); }
+
+/* inicio en lima: «Juan 3» gigante y el menú en peso regular */
+:root[data-skin="editorial"] .inicio { align-items: stretch; justify-content: stretch; padding: clamp(36px, 5vh, 56px) clamp(32px, 3.4vw, 60px) 84px; }
+:root[data-skin="editorial"] .inicio-centro { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto auto auto; align-content: start; }
+:root[data-skin="editorial"] .inicio-edicion { display: none; }
+:root[data-skin="editorial"] .inicio .marca-grande { grid-row: 1; margin: 0; flex-direction: row; align-items: baseline; gap: 10px; text-align: left; justify-self: start; }
+:root[data-skin="editorial"] .inicio .marca-grande .marca-horizontal { height: 30px; }
+:root[data-skin="editorial"] .inicio-ultima { grid-row: 2; width: 100%; margin: clamp(18px, 4vh, 44px) 0 0; font: 400 11px/1.4 var(--f-ui); letter-spacing: 0.09em; text-transform: uppercase; color: var(--tinta-2); }
+:root[data-skin="editorial"] .inicio-ultima button { display: block; margin: 6px 0 0 -0.04em; padding: 0; border: 0; color: var(--tinta); font-size: clamp(96px, min(18vw, 30vh), 330px); line-height: 0.84; }
+:root[data-skin="editorial"] .inicio-empezar button { font-size: clamp(44px, min(7vw, 11vh), 110px); }
+:root[data-skin="editorial"] .inicio-empezar small { text-transform: none; letter-spacing: 0; font-size: 13px; }
+:root[data-skin="editorial"] .inicio-recuerdo { grid-row: 3; }
+:root[data-skin="editorial"] .inicio-entradas { grid-row: 4; width: 100%; margin-top: clamp(20px, 4vh, 40px); padding-top: 14px; border-top: 1px solid var(--tinta);
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 40px; }
+:root[data-skin="editorial"] .inicio-entrada { grid-template-columns: 30px minmax(0, 1fr) 22px; padding: 2px 0; font: 400 clamp(30px, min(4.4vw, 6.4vh), 66px)/1.22 var(--f-display); letter-spacing: -0.035em; }
+:root[data-skin="editorial"] .inicio-entrada:hover { color: var(--tinta-2); transform: none; }
+:root[data-skin="editorial"] .inicio-num { color: var(--tinta-2); }
+:root[data-skin="editorial"] .inicio-flecha { color: var(--tinta); }
+:root[data-skin="editorial"] .inicio-cultura { display: none; }
+:root[data-skin="editorial"] .inicio-saludo { margin-bottom: 12px; font-size: clamp(24px, 2.4vw, 36px); line-height: 1; text-transform: none; }
+:root[data-skin="editorial"] .puerta-hola { font-size: clamp(56px, 8vw, 128px); line-height: 0.88; }
+:root[data-skin="editorial"] .puerta-campo input { font: 400 26px var(--f-display); letter-spacing: -0.03em; }
+:root[data-skin="editorial"] .inicio-firma { color: var(--tinta-2); font-family: var(--f-ui); }
+
+/* títulos de página */
+:root[data-skin="editorial"] .titular h1 { font-size: clamp(64px, 10vw, 160px); line-height: 0.86; }
+:root[data-skin="editorial"] .coleccion:hover { background: rgba(17, 17, 17, 0.06); }
+:root[data-skin="editorial"] .filtro[aria-pressed="true"], :root[data-skin="editorial"] .filtro[aria-selected="true"] { box-shadow: inset 0 -2px 0 var(--tinta); }
+
+/* lector: el número del capítulo en un cuadro lima; el lima nunca es letra sobre blanco */
+:root[data-skin="editorial"] .cap-titulo { font-size: clamp(60px, 8vw, 112px); line-height: 0.9; letter-spacing: -0.06em; }
+:root[data-skin="editorial"] .cap-titulo em { display: inline-block; margin-left: 0.08em; padding: 0.08em 0.12em 0; background: var(--ed-color); color: #111; font-style: normal; font-weight: 700; line-height: 0.86; }
+:root[data-skin="editorial"] .cap-filete { display: none; }
+:root[data-skin="editorial"] .texto .num { font: 700 10px var(--f-ui); color: var(--tinta); }
+:root[data-skin="editorial"][data-theme="dark"] .texto .num { color: var(--ed-color); }
+:root[data-skin="editorial"] .lb-capitulo span { color: inherit; font-weight: 400; }
+
+/* =====================================================================================
+   BIBLIOTECA como índice (Imprenta y Editorial): los 66 a la vista, en columnas,
+   con el rótulo de cada sección y el libro que vas leyendo marcado.
+   ===================================================================================== */
+:root[data-skin] .cubiertas { display: block; columns: 4; column-gap: clamp(22px, 2.6vw, 40px); }
+:root[data-skin="editorial"] .cubiertas { columns: 5; }
+:root[data-skin] .cubierta, :root[data-skin] .cubierta:nth-child(n) {
+  display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; align-items: baseline; width: 100%; aspect-ratio: auto; padding: 0;
+  background: none; background-image: none; border-bottom: 1px solid var(--linea); break-inside: avoid; contain: none; transform: none; isolation: auto; overflow: visible;
+}
+:root[data-skin] .cubierta:hover { background: none; transform: none; }
+:root[data-skin] .cubierta.aluminio::before { display: none; }
+:root[data-skin] .cub-tipo, :root[data-skin] .cub-monograma, :root[data-skin] .cub-familia { display: none; }
+:root[data-skin] .cub-num, :root[data-skin] .cub-caps { font: 400 10.5px var(--f-ui); letter-spacing: 0.06em; color: var(--tenue); font-variant-numeric: tabular-nums; }
+:root[data-skin] .cub-titulo { transform: none !important; color: var(--tinta); overflow-wrap: normal; hyphens: none; }
+/* rótulo de sección: va dentro del primer libro, así nunca queda huérfano al pie de una columna */
+:root[data-skin] .cubierta[data-sec]::before, :root[data-skin] .cubierta.aluminio[data-sec]::before {
+  content: attr(data-sec); display: block; grid-column: 1 / -1; position: static; inset: auto; opacity: 1; background: none; z-index: auto;
+}
+.cub-caps { display: none; }
+:root[data-skin] .cub-caps { display: inline; text-align: right; }
+
+:root[data-skin="imprenta"] .cubierta { min-height: 30px; }
+:root[data-skin="imprenta"] .cubiertas .cubierta .cub-titulo { font: 760 clamp(19px, 1.8vw, 25px)/1.12 var(--imp-cn); font-stretch: 68%; letter-spacing: 0; text-transform: uppercase; }
+:root[data-skin="imprenta"] .cubierta:hover .cub-titulo { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+/* el libro actual se marca en su renglón (no en el rótulo de sección que pueda llevar encima) */
+:root[data-skin="imprenta"] .cubierta.actual > span { background: var(--imp-color); }
+:root[data-skin="imprenta"] .cubierta.actual > .cub-num { padding-left: 4px; }
+:root[data-skin="imprenta"] .cubierta.actual :is(.cub-num, .cub-caps) { color: #161616; }
+:root[data-skin="imprenta"] .cubierta[data-sec]::before { margin: 18px 0 0; padding: 0 0 4px; border-bottom: 1px solid var(--tinta); font: 600 11px/1.3 var(--f-ui); letter-spacing: 0.09em; text-transform: uppercase; color: var(--tinta); }
+:root[data-skin="imprenta"] .cubiertas > .cubierta:first-child[data-sec]::before { margin-top: 0; }
+
+:root[data-skin="editorial"] .cubierta { min-height: 30px; }
+:root[data-skin="editorial"] .cubiertas .cubierta .cub-titulo { font: 400 clamp(16px, 1.45vw, 20px)/1.45 var(--f-ui); letter-spacing: -0.02em; }
+:root[data-skin="editorial"] .cubierta:hover .cub-titulo { text-decoration: underline; text-underline-offset: 3px; }
+:root[data-skin="editorial"] .cubierta.actual > span { background: var(--tinta); }
+:root[data-skin="editorial"] .cubierta.actual > .cub-num { padding-left: 4px; }
+:root[data-skin="editorial"] .cubierta.actual > .cub-caps { padding-right: 4px; }
+:root[data-skin="editorial"] .cubierta.actual :is(.cub-titulo, .cub-num, .cub-caps) { color: var(--fondo); }
+:root[data-skin="editorial"] .cubierta[data-sec]::before { margin: 16px 0 0; padding: 8px 0 4px; border-top: 2px solid var(--tinta); font: 700 15px/1.2 var(--f-ui); letter-spacing: -0.02em; color: var(--tinta); }
+:root[data-skin="editorial"] .cubiertas > .cubierta:first-child[data-sec]::before { margin-top: 0; }
+
+@media (max-width: 1100px) { :root[data-skin] .cubiertas { columns: 3; } }
+@media (max-width: 760px) { :root[data-skin] .cubiertas { columns: 2; } }
+@media (max-width: 420px) { :root[data-skin] .cubiertas { columns: 1; } }
+
+/* =====================================================================================
+   PORTADA AL ABRIR UN LIBRO, una por skin
+   - Blanco (base): la hoja clara del diseño de siempre, Inter Tight fina, sin color ni textura.
+   - Imprenta: amarillo entero, condensada negra y el marco fino.
+   - Editorial: la portada en renglones de antes, ahora en lima con letra negra.
+   ===================================================================================== */
+.portada { --pt-azul: #F7F7F5; --pt-tinta: #181818; }
+.portada::after { display: none; }
+.pt-palabra i { font-weight: 300; font-family: 'Inter Tight', sans-serif; letter-spacing: -0.065em; text-transform: none; filter: none; }
+.pt-fila:nth-of-type(3) .pt-palabra i, .pt-fila:nth-of-type(5) .pt-palabra i { color: #8A8A87; }
+.pt-nota { font: 500 clamp(11px, 0.92vw, 14px)/1.4 'DM Sans', sans-serif; letter-spacing: 0.14em; color: #6E6E6C; }
+
+:root[data-skin] .portada::after { display: block; }
+:root[data-skin] .pt-fila .pt-palabra i { color: inherit; filter: url(#pt-impreso); text-transform: uppercase; }
+:root[data-skin] .pt-palabra .pt-desenfocada { filter: blur(12px); }
+:root[data-skin] .pt-nota { font: 700 clamp(12px, 1.15vw, 17px)/1.3 var(--f-ui); letter-spacing: 0.05em; color: inherit; }
+
+:root[data-skin="imprenta"] .portada { --pt-azul: var(--imp-color); --pt-tinta: #161616; }
+:root[data-skin="imprenta"] .portada::before { content: ""; position: absolute; inset: 12px; border: 1.5px solid #161616; z-index: 3; pointer-events: none; }
+:root[data-skin="imprenta"] .pt-palabra i { font-family: 'Archivo Var', sans-serif; font-stretch: 68%; font-weight: 760; letter-spacing: 0; line-height: 0.84; }
+:root[data-skin="imprenta"] .pt-nota { font-family: 'Archivo Var', sans-serif; font-weight: 600; letter-spacing: 0.09em; }
+
+:root[data-skin="editorial"] .portada { --pt-azul: var(--ed-color); --pt-tinta: #111111; }
+:root[data-skin="editorial"] .pt-palabra i { font-family: 'Heros', sans-serif; font-weight: 700; letter-spacing: -0.065em; }
+
+/* pantallas chicas: el menú del inicio Editorial en una sola columna, con aire entre renglones */
+@media (max-width: 760px) {
+  :root[data-skin="editorial"] .inicio-entradas { grid-template-columns: minmax(0, 1fr); max-width: none; row-gap: 4px; }
+  :root[data-skin="editorial"] .inicio-entrada { font-size: clamp(26px, 8vw, 36px); line-height: 1.2; }
+}
+/* Imprenta usa una letra de interfaz más ancha: en celulares angostos, los controles del lector usan su ancho angosto */
+@media (max-width: 480px) {
+  :root[data-skin="imprenta"] :is(.lb-control, .lb-capitulo) { font-stretch: 82%; letter-spacing: 0.01em; }
+}

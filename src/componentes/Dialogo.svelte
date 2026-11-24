@@ -10,6 +10,9 @@
   import { ui } from '../lib/ui.svelte.js';
   import { t } from '../lib/i18n.svelte.js';
   let dlg;
+  // Un clic en la zona oscura de afuera cierra. Solo si el clic también EMPEZÓ afuera: así, seleccionar
+  // texto o arrastrar un deslizador y soltar fuera del cuadro no lo cierra por accidente.
+  let empezoAfuera = false;
 
   $effect(() => {
     if (!dlg) return;
@@ -22,7 +25,9 @@
      si para entonces ya se abrió otro, para no cerrarlo (como en el buscador) -->
 <dialog class="dlg" class:dlg-ancho={ui.dialogo === 'poster' || ui.dialogo === 'evidencia'} bind:this={dlg}
   onclose={() => { if (dlg.open) return; ui.dialogo = null; ui.lamina = null; }}
-  oncancel={(e) => { e.preventDefault(); ui.dialogo = null; ui.lamina = null; }} aria-labelledby="dlg-titulo">
+  oncancel={(e) => { e.preventDefault(); ui.dialogo = null; ui.lamina = null; }} aria-labelledby="dlg-titulo"
+  onpointerdown={(e) => (empezoAfuera = e.target === dlg)}
+  onclick={(e) => { if (empezoAfuera && e.target === dlg) { ui.dialogo = null; ui.lamina = null; } }}>
   {#if ui.dialogo}
     <div class="dlg-cabeza">
       <h2 id="dlg-titulo">{t(`dlg.${ui.dialogo}`)}</h2>

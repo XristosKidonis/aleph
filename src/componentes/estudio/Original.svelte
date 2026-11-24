@@ -12,6 +12,13 @@
   let palabras = $state(null);
   let elegida = $state(null);
   let entrada = $state(null);
+
+  // La definición viene de la base con <b>, <i> y <br>. Se escapa todo y se devuelven solo esas tres, sin
+  // atributos: aunque la base llegara alterada, aquí no puede entrar código.
+  const definicionSegura = (html) => String(html || '')
+    .replace(/&(?!(?:#\d+|#x[\da-f]+|[a-z]+);)/gi, '&amp;') // las entidades que ya trae (&gt;) se respetan
+    .replace(/[<>"']/g, (c) => ({ '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
+    .replace(/&lt;(\/?)(b|i|br)\s*\/?&gt;/gi, (_, cierre, tag) => `<${cierre}${tag.toLowerCase()}>`);
   let conc = $state(null);
   let textosConc = $state({});
   let libroFiltro = $state(null);
@@ -108,7 +115,7 @@
         <p class="strong-def">{decodificar(elegida.morf, idioma())}</p>
         {#if entrada?.definicion}
           <h3 style="margin-top: 14px">{t('ori.definicion')}</h3>
-          <div class="strong-def definicion">{@html entrada.definicion}</div>
+          <div class="strong-def definicion">{@html definicionSegura(entrada.definicion)}</div>
         {/if}
         <a class="enlace-texto" href="https://www.blueletterbible.org/lexicon/{elegida.strong.replace(/[A-Za-z]$/, '').toLowerCase()}/kjv/" target="_blank" rel="noopener">{t('pal.verBLB')}</a>
       </div>

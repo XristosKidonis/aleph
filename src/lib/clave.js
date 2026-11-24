@@ -14,7 +14,6 @@ const SUGERIDA = {
 export const sugerida = () => SUGERIDA[idioma()];
 
 export const significado = (color) => (usuario.ajustes.claveColores?.[color] || '').trim();
-export const tieneClave = () => COLORES.some(significado);
 // «Promesas» si la clave lo define; si no, el nombre del color
 export const etiquetaColor = (color) => significado(color) || t(`color.${color}`);
 
@@ -83,7 +82,7 @@ export async function imagenClave() {
   ctx.font = '650 34px "Inter Tight", sans-serif';
   ctx.letterSpacing = '-2px';
   ctx.textAlign = 'left';
-  ctx.fillText('CHI—RO', 90, H - 90);
+  ctx.fillText('ALEPH', 90, H - 90);
   ctx.letterSpacing = '0px';
   rotulo(t('clave.imgPie'), W - 90, H - 92, 'right');
 

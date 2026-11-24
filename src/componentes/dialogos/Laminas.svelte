@@ -1,9 +1,14 @@
+<script module>
+  // lo que la persona personalizó en cada acabado: se recuerda mientras la app está abierta
+  const recuerdo = {};
+</script>
+
 <script>
   // Estudio de láminas: el versículo elegido como fondo de pantalla o diseño para compartir.
   // Viene de la selección del lector o de la galería del menú de inicio (ui.lamina).
   import { ui, etiquetaSeleccion, avisar } from '../../lib/ui.svelte.js';
   import { usuario } from '../../lib/usuario.svelte.js';
-  import { ESTILOS, FORMATOS, VARIANTES, CABEN, dibujarLamina, fraseCorta, palabraClave, trozos } from '../../lib/laminas.js';
+  import { ESTILOS, FORMATOS, VARIANTES, CABEN, FABRICA, POSICIONES, dibujarLamina, fraseCorta, palabraClave, trozos } from '../../lib/laminas.js';
   import { guardarArchivo } from '../../lib/archivos.js';
   import { t } from '../../lib/i18n.svelte.js';
 
@@ -54,6 +59,32 @@
   const esEntero = $derived(!soloPalabra && grande.trim() === completo);
   const limpio = (x) => x.replace(/[.,;:!?¡¿«»"]+$/g, '').trim();
 
+  // Personalizar (pedido por el dueño el 2026-11-23): cada acabado arranca de fábrica (FABRICA del motor) y la
+  // persona cambia fondo, color de la letra, letra, tamaño, posición y textura; se ve al instante.
+  let ajustes = $state(structuredClone(recuerdo));
+  $effect(() => {
+    const ahora = $state.snapshot(ajustes);
+    for (const k of Object.keys(recuerdo)) delete recuerdo[k];
+    Object.assign(recuerdo, ahora);
+  });
+  const CAMPOS = ['fondo', 'tinta', 'letra', 'tam', 'pos', 'grano'];
+  const COMUNES = ['#f6f6f3', '#1a1a1a', '#fdd0e0', '#b9e8f0', '#e0261c'];
+  const fab = $derived(FABRICA[estilo]);
+  const valor = (campo) => ajustes[estilo]?.[campo] ?? fab[campo];
+  const cambiado = (campo) => String(valor(campo)).toLowerCase() !== String(fab[campo]).toLowerCase();
+  const algunCambio = $derived(CAMPOS.some(cambiado));
+  const luz = (c) => { const n = parseInt(c.slice(1), 16); return (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255; };
+  // sin fondo de color (Grabado: la letra va sobre el grabado oscuro) solo se ofrecen colores claros para la letra
+  const muestras = (campo) => [...new Set([fab.fondo, fab.tinta, ...COMUNES].filter(Boolean).map((c) => c.toLowerCase()))]
+    .filter((c) => campo !== 'tinta' || fab.fondo || luz(c) > 0.6);
+  function poner(campo, v) { ajustes[estilo] = { ...ajustes[estilo], [campo]: v }; }
+  function restablecer() { delete ajustes[estilo]; }
+  // mientras se arrastra un deslizador o se elige un color, la vista se dibuja a media resolución (va fluida);
+  // al soltar, completa. Guardar siempre usa la completa.
+  let rapido = false;
+  const arrastrar = (campo, v) => { rapido = true; poner(campo, v); };
+  const soltar = () => { rapido = false; clearTimeout(espera); espera = setTimeout(dibujar, 0); };
+
   async function dibujar() {
     if (!lienzo || !frase.trim()) return;
     const n = ++pedido;
@@ -61,7 +92,7 @@
     const o = $state.snapshot(origen);
     await dibujarLamina(lienzo, {
       ...o, estilo, formato, tono: tonoDe(estilo), texto: frase, grande: recorta ? grande : '', rotulo: t('lam.rotulo'),
-      imagen: usuario.portadas[o.libro] || undefined,
+      imagen: usuario.portadas[o.libro] || undefined, ajuste: $state.snapshot(ajustes[estilo]), escala: rapido ? 0.5 : 1,
     });
     if (n === pedido) dibujando = false;
   }
@@ -70,13 +101,14 @@
 
   let espera;
   $effect(() => {
-    estilo; formato; tono; frase; grande; lienzo;
+    estilo; formato; tono; frase; grande; lienzo; JSON.stringify(ajustes[estilo] ?? null);
     clearTimeout(espera);
-    espera = setTimeout(dibujar, 160);
+    espera = setTimeout(dibujar, rapido ? 30 : 160);
     return () => clearTimeout(espera);
   });
 
   async function guardar() {
+    if (rapido || lienzo.width !== FORMATOS[formato].w) { rapido = false; clearTimeout(espera); await dibujar(); }
     const blob = await new Promise((r) => lienzo.toBlob(r, 'image/png'));
     const bytes = new Uint8Array(await blob.arrayBuffer());
     const nombre = `${origen.referencia.replace(/[^\p{L}\d]+/gu, '-')}-${estilo}-${formato}.png`;
@@ -108,6 +140,40 @@
       <span class="etiqueta-ui">{t('lam.formato')}</span>
       <div class="chips">
         {#each Object.keys(FORMATOS) as f}<button aria-pressed={formato === f} onclick={() => (formato = f)}>{t(`lam.f.${f}`)}</button>{/each}
+      </div>
+      <div class="lam-personal">
+        <div class="lam-personal-cabeza">
+          <span class="lam-personal-titulo">{t('lam.personalizar')}</span>
+          <button class="lam-restablecer" disabled={!algunCambio} onclick={restablecer}>{t('lam.restablecer')}</button>
+        </div>
+        {#each ['fondo', 'tinta'] as campo (campo)}
+          {#if fab[campo]}
+            <span class="etiqueta-ui lam-campo" class:cambiado={cambiado(campo)}>{t(`lam.p.${campo}`)}</span>
+            <div class="lam-muestras" role="group" aria-label={t(`lam.p.${campo}`)}>
+              {#each muestras(campo) as c (c)}
+                <button style:background={c} aria-pressed={valor(campo).toLowerCase() === c} aria-label={c} onclick={() => poner(campo, c)}></button>
+              {/each}
+              <label class="lam-otro" title={t('lam.p.otro')}>+<input type="color" value={valor(campo)} aria-label={t('lam.p.otro')}
+                oninput={(e) => arrastrar(campo, e.currentTarget.value)} onchange={soltar} /></label>
+            </div>
+          {/if}
+        {/each}
+        {#if fab.letras.length}
+          <span class="etiqueta-ui lam-campo" class:cambiado={cambiado('letra')}>{t('lam.p.letra')}</span>
+          <div class="chips">
+            {#each fab.letras as l}<button aria-pressed={valor('letra') === l} onclick={() => poner('letra', l)}>{t(`lam.l.${l}`)}</button>{/each}
+          </div>
+        {/if}
+        <label class="etiqueta-ui lam-campo" class:cambiado={cambiado('tam')} for="lam-tam">{t('lam.p.tam')} <em>{valor('tam')} %</em></label>
+        <input id="lam-tam" type="range" min="60" max="140" step="1" value={valor('tam')}
+          oninput={(e) => arrastrar('tam', +e.currentTarget.value)} onchange={soltar} />
+        <span class="etiqueta-ui lam-campo" class:cambiado={cambiado('pos')}>{t('lam.p.pos')}</span>
+        <div class="chips">
+          {#each POSICIONES as p}<button aria-pressed={valor('pos') === p} onclick={() => poner('pos', p)}>{t(`lam.pos.${p}`)}</button>{/each}
+        </div>
+        <label class="etiqueta-ui lam-campo" class:cambiado={cambiado('grano')} for="lam-grano">{t('lam.p.grano')} <em>{valor('grano')} %</em></label>
+        <input id="lam-grano" type="range" min="0" max="100" step="1" value={valor('grano')}
+          oninput={(e) => arrastrar('grano', +e.currentTarget.value)} onchange={soltar} />
       </div>
       <label class="etiqueta-ui" for="lam-frase">{t('lam.frase')}</label>
       <textarea id="lam-frase" class="campo" rows="4" bind:value={frase}></textarea>

@@ -9,6 +9,21 @@ const HF = 'https://huggingface.co/rhasspy/piper-voices/resolve/main/';
 const FONEMAS = 'https://cdn.jsdelivr.net/npm/@diffusionstudio/piper-wasm@1.0.0/build/piper_phonemize';
 export const MOTOR = [`${FONEMAS}.js`, `${FONEMAS}.wasm`, `${FONEMAS}.data`];
 export const MOTOR_MB = 19;
+// Huella SHA-256 de cada archivo del motor (la misma que publica jsDelivr para la versión 1.0.0). El .js se
+// ejecuta dentro de la app: si lo que llega o lo guardado no coincide byte a byte, no se usa.
+const HUELLAS = {
+  [`${FONEMAS}.js`]: 'fef0c2fc442d24fdef5c7c7cc37d5da2314407640fe11ab1bfe347c723dff19b',
+  [`${FONEMAS}.wasm`]: 'b777cd107a91d2bcc6a1ea46f2c26a662a7407394fe84589198aeaa83dd7a9d6',
+  [`${FONEMAS}.data`]: '29f1025eb23a5b5c192cd14a6efbce4509402ff265405072ee6f7d1a09b78f8c',
+};
+async function comprobarHuella(url, blob) {
+  const esperada = HUELLAS[url];
+  if (!esperada) return blob;
+  const hash = new Uint8Array(await crypto.subtle.digest('SHA-256', await blob.arrayBuffer()));
+  const hex = [...hash].map((b) => b.toString(16).padStart(2, '0')).join('');
+  if (hex !== esperada) throw new Error(`El archivo ${url.split('/').pop()} no coincide con el original; no se usará.`);
+  return blob;
+}
 
 // Solo voces con licencia libre para cualquier uso (se dejaron fuera las «no comerciales»)
 export const VOCES_NEURALES = [
@@ -60,9 +75,13 @@ export async function instalada(id) {
 // en la app de escritorio, si el WebView lo bloquea, se pide por el plugin HTTP de Tauri.
 async function bajar(url, alAvanzar) {
   let r;
+  const corte = new AbortController();
+  const reloj = setTimeout(() => corte.abort(new Error('sin respuesta en 20 s')), 20000); // solo hasta las cabeceras
   try {
-    r = await fetch(url);
+    r = await fetch(url, { signal: corte.signal });
+    clearTimeout(reloj);
   } catch (e) {
+    clearTimeout(reloj);
     if (!esTauri) throw e;
     r = await pedir(url);
   }
@@ -91,7 +110,7 @@ export async function instalar(id, alAvanzar = () => {}) {
   const total = faltan.reduce((a, u) => a + estimado(u), 0) || 1;
   let hecho = 0;
   for (const u of faltan) {
-    const blob = await bajar(u, (n) => alAvanzar(Math.min(1, (hecho + n) / total)));
+    const blob = await comprobarHuella(u, await bajar(u, (n) => alAvanzar(Math.min(1, (hecho + n) / total))));
     await guardarArchivo(u, blob);
     hecho += estimado(u);
   }
@@ -118,11 +137,13 @@ async function preparar(id) {
     ort.env.wasm.numThreads = 1; // sin aislamiento de origen no hay hilos
   }
   if (!crearFonemizador) {
-    const codigo = await (await leerArchivo(`${FONEMAS}.js`)).text();
+    // se vuelve a comprobar lo guardado: IndexedDB se puede tocar desde fuera de la app (otra página del mismo origen)
+    const leer = async (u) => comprobarHuella(u, await leerArchivo(u)).catch(async (e) => { await borrarArchivo(u); throw e; });
+    const codigo = await (await leer(`${FONEMAS}.js`)).text();
     crearFonemizador = new Function(`${codigo}\nreturn createPiperPhonemize;`)();
     binarios = {
-      wasm: await (await leerArchivo(`${FONEMAS}.wasm`)).arrayBuffer(),
-      data: await (await leerArchivo(`${FONEMAS}.data`)).arrayBuffer(),
+      wasm: await (await leer(`${FONEMAS}.wasm`)).arrayBuffer(),
+      data: await (await leer(`${FONEMAS}.data`)).arrayBuffer(),
     };
   }
   if (!sesiones.has(id)) {

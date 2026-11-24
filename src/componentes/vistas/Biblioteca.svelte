@@ -1,7 +1,7 @@
 <script>
   // Biblioteca: los 66 libros como cubiertas tipográficas en gris. La letra es la imagen.
   // Algunas cubiertas llevan un acabado aluminio mate muy leve; ninguna textura toca el texto.
-  import { irA } from '../../lib/ui.svelte.js';
+  import { irA, entrarAlLibro } from '../../lib/ui.svelte.js';
   import { usuario } from '../../lib/usuario.svelte.js';
   import { LIBROS, nombreLibro, normalizar, parsearReferencia } from '../../lib/libros.js';
   import { t } from '../../lib/i18n.svelte.js';
@@ -25,10 +25,49 @@
     });
   });
 
-  function abrir(l) {
+  // Otro libro (o el mismo en su capítulo 1) abre por su portada: con «Inmersivo», la cubierta tocada crece hasta ser
+  // esa portada (entrarAlLibro). El libro que se está leyendo, en otro capítulo, sigue donde iba.
+  function abrir(l, cubierta = null) {
     const p = usuario.ajustes.pos;
-    if (p.libro === l.n) irA(p.libro, p.cap);
-    else irA(l.n, 1);
+    if (p.libro === l.n && p.cap !== 1) irA(p.libro, p.cap);
+    else entrarAlLibro(cubierta, l.n);
+  }
+
+  // La cubierta bajo el mouse se inclina apenas hacia él (4–5°) y una luz suave lo sigue: «esta se puede tomar».
+  // Solo en el skin Blanco (las demás son listas, no cubiertas), con mouse, en pantallas anchas y en «Inmersivo».
+  function inclinar(nodo) {
+    const quieto = matchMedia('(prefers-reduced-motion: reduce)');
+    const apto = matchMedia('(min-width: 901px) and (hover: hover) and (pointer: fine)');
+    const meta = { x: 0, y: 0 }, pos = { x: 0, y: 0 };
+    let cuadro = 0;
+    function pintar() {
+      cuadro = 0;
+      if (nodo.classList.contains('entrando')) { nodo.style.transform = ''; return; }
+      pos.x += (meta.x - pos.x) * 0.12;
+      pos.y += (meta.y - pos.y) * 0.12;
+      const quieta = !meta.x && !meta.y && Math.abs(pos.x) + Math.abs(pos.y) < 0.004;
+      nodo.style.transform = quieta ? '' : `perspective(900px) rotateX(${(-pos.y * 4).toFixed(3)}deg) rotateY(${(pos.x * 5).toFixed(3)}deg) translateY(-2px)`;
+      if (!quieta) cuadro = requestAnimationFrame(pintar);
+    }
+    function mover(e) {
+      const inmersivo = (document.documentElement.dataset.movimiento || 'inmersivo') === 'inmersivo';
+      if (e.pointerType !== 'mouse' || quieto.matches || !apto.matches || !inmersivo || document.documentElement.dataset.skin) return;
+      const r = nodo.getBoundingClientRect();
+      meta.x = (e.clientX - r.left) / r.width - 0.5;
+      meta.y = (e.clientY - r.top) / r.height - 0.5;
+      nodo.style.setProperty('--mx', `${((meta.x + 0.5) * 100).toFixed(1)}%`);
+      nodo.style.setProperty('--my', `${((meta.y + 0.5) * 100).toFixed(1)}%`);
+      nodo.classList.add('inclinada');
+      if (!cuadro) cuadro = requestAnimationFrame(pintar);
+    }
+    function soltar() {
+      meta.x = meta.y = 0;
+      nodo.classList.remove('inclinada');
+      if (!cuadro) cuadro = requestAnimationFrame(pintar);
+    }
+    nodo.addEventListener('pointermove', mover);
+    nodo.addEventListener('pointerleave', soltar);
+    return { destroy() { cancelAnimationFrame(cuadro); nodo.removeEventListener('pointermove', mover); nodo.removeEventListener('pointerleave', soltar); } };
   }
 
   // Enter en el buscador: una referencia («jn 3:16») va directo; si no, el primer libro
@@ -60,11 +99,15 @@
 
   {#if visibles.length}
     <div class="cubiertas">
-      {#each visibles as l (l.n)}
+      {#each visibles as l, i (l.n)}
+        <!-- data-sec: el rótulo de sección que los skins Imprenta y Editorial muestran al empezar cada familia -->
         <button class="cubierta fam-{familia(l.n)}" class:firma={FIRMA.has(l.n)} class:aluminio={l.n === 1 || l.n === 19 || l.n === 43 || l.n === 66}
-          onclick={() => abrir(l)} aria-label={t('bib.abrir', { libro: nombreLibro(l) })}>
+          class:actual={l.n === usuario.ajustes.pos.libro} data-libro={l.n} use:inclinar
+          data-sec={i === 0 || familia(visibles[i - 1].n) !== familia(l.n) ? t(`fam.${familia(l.n)}`) : null}
+          onclick={(e) => abrir(l, e.currentTarget)} aria-label={t('bib.abrir', { libro: nombreLibro(l) })}>
           <span class="cub-num">{String(l.n).padStart(2, '0')}</span>
           <span class="cub-titulo">{nombreLibro(l)}</span>
+          <span class="cub-caps" aria-hidden="true">{l.capitulos}</span>
           <span class="cub-tipo">{l.testamento === 'AT' ? t('nav.at') : t('nav.nt')} · {t('bib.capitulos', { n: l.capitulos })}</span>
           {#if FIRMA.has(l.n)}
             <span class="cub-monograma" aria-hidden="true">CR / {String(l.n).padStart(2, '0')}</span>

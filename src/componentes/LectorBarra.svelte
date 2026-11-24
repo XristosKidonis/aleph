@@ -4,10 +4,11 @@
   // De izquierda a derecha: volver, dónde estás, versión (y con cuál comparar), «Aa» (tamaño, tema, letra,
   // margen, Calma), escuchar el capítulo, ambiente, cinta y Estudio. Todo queda guardado en usuario.db.
   import Icono from './Icono.svelte';
-  import { ui, abrirVista, avisar } from '../lib/ui.svelte.js';
+  import { ui, abrirVista, avisar, volverAlEstante } from '../lib/ui.svelte.js';
   import { usuario, ajustar, alternarCinta } from '../lib/usuario.svelte.js';
   import { lista } from '../lib/biblia.js';
   import { LIBROS, nombreLibro } from '../lib/libros.js';
+  import { tick } from 'svelte';
   import { t } from '../lib/i18n.svelte.js';
   import { voz, leer, pausarLectura, puedeSeguir } from '../lib/voz.svelte.js';
   import { amb } from '../lib/ambiente.svelte.js';
@@ -28,6 +29,13 @@
 
   const tamano = (d) => ajustar('tamano', Math.max(15, Math.min(32, usuario.ajustes.tamano + d)));
   const alternarMenu = (m) => (ui.menuBarra = ui.menuBarra === m ? null : m);
+  // «Comparar» abre el mismo menú, pero ya con la lista de la otra traducción enfocada
+  async function abrirComparar() {
+    if (ui.menuBarra === 'version') { ui.menuBarra = null; return; }
+    ui.menuBarra = 'version';
+    await tick();
+    barra?.querySelector('.lb-paralela select')?.focus();
+  }
 
   // un menú abierto se cierra al tocar fuera de él (Esc lo cierra desde App.svelte)
   let barra;
@@ -40,7 +48,7 @@
 </script>
 
 <div class="lector-barra" bind:this={barra}>
-  <button class="lb-volver" onclick={() => abrirVista('biblioteca')}><span aria-hidden="true">←</span> <span class="lb-texto">{t('lec.volver')}</span></button>
+  <button class="lb-volver" onclick={volverAlEstante}><span aria-hidden="true">←</span> <span class="lb-texto">{t('lec.volver')}</span></button>
 
   <div class="lb-lugar">
     <span class="lb-etiqueta">{t('lec.leyendo')}</span>
@@ -51,7 +59,11 @@
 
   <div class="lb-controles">
     <button class="lb-control lb-versiones" aria-expanded={ui.menuBarra === 'version'} aria-haspopup="true" onclick={() => alternarMenu('version')} title={t('barra.versiones')}>
-      {usuario.ajustes.version}{#if usuario.ajustes.paralela}<span class="lb-con"> ∥ {usuario.ajustes.paralela}</span>{/if} <span aria-hidden="true">▾</span>
+      {usuario.ajustes.version} <span aria-hidden="true">▾</span>
+    </button>
+    <!-- botón propio para comparar: con solo «NTV ▾» nadie adivinaba que ahí se abre otra traducción -->
+    <button class="lb-control lb-comparar" aria-pressed={!!usuario.ajustes.paralela} onclick={abrirComparar} title={t('barra.compararAyuda')}>
+      <span aria-hidden="true">∥</span> {#if usuario.ajustes.paralela}{usuario.ajustes.paralela}{:else}<span class="lb-comparar-texto">{t('barra.compararBoton')}</span>{/if}
     </button>
     <button class="lb-control lb-aa" aria-expanded={ui.menuBarra === 'aa'} aria-haspopup="true" onclick={() => alternarMenu('aa')} title={t('barra.aa')}>
       <span class="lb-aa-letras">Aa</span> <span aria-hidden="true">▾</span>
@@ -88,7 +100,11 @@
         <span>{t('barra.comparar')}</span>
         <select value={usuario.ajustes.paralela} onchange={(e) => ajustar('paralela', e.currentTarget.value)}>
           <option value="">{t('barra.sinComparar')}</option>
-          {#each versiones.filter((v) => v.id !== usuario.ajustes.version) as v}<option value={v.id}>{v.id}</option>{/each}
+          {#each grupos as [nombre, vs]}
+            <optgroup label={nombre}>
+              {#each vs.filter((v) => v.id !== usuario.ajustes.version) as v}<option value={v.id}>{v.id}{v.enLinea ? ` ${t('barra.enLinea')}` : ''}</option>{/each}
+            </optgroup>
+          {/each}
         </select>
       </label>
     </div>

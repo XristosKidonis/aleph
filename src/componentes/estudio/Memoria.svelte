@@ -1,12 +1,13 @@
 <script>
   import { irA, avisar } from '../../lib/ui.svelte.js';
   import { usuario, repasar, quitarMemoria } from '../../lib/usuario.svelte.js';
-  import { pasaje } from '../../lib/biblia.js';
+  import { pasaje, versionEstudio } from '../../lib/biblia.js';
   import { parsearRango, nombreRef } from '../../lib/libros.js';
   import { t, fecha } from '../../lib/i18n.svelte.js';
 
   let actual = $state(null);
   let texto = $state('');
+  let aviso = $state(''); // por qué el texto no está en tu versión, o por qué no hay texto
   let nivel = $state(0);
   let ahora = $state(Date.now());
 
@@ -22,9 +23,16 @@
     const r = parsearRango(actual);
     nivel = 0;
     texto = '';
-    pasaje(usuario.ajustes.version, r.libro, r.cap, r.v, r.hasta, usuario.ajustes.claveNLT)
+    aviso = '';
+    const version = usuario.ajustes.version;
+    // si tu versión no responde (la NTV sin internet), se repasa en una incluida del mismo idioma, y se dice
+    pasaje(version, r.libro, r.cap, r.v, r.hasta, usuario.ajustes.claveNLT)
       .then((tx) => (texto = tx))
-      .catch(() => pasaje('RV1909', r.libro, r.cap, r.v, r.hasta).then((tx) => (texto = tx)));
+      .catch(() => pasaje(versionEstudio(version), r.libro, r.cap, r.v, r.hasta).then((tx) => {
+        texto = tx;
+        aviso = t('mem.enRespaldo', { v: versionEstudio(version) });
+      }))
+      .catch((e) => (aviso = e.message || String(e)));
   });
 
   // Oculta palabras según el nivel, conservando la puntuación
@@ -58,6 +66,7 @@
       <div class="mem-tarjeta">
         <span class="ref-encabezado">{ref(actual)}</span>
         <p class="mem-texto">{#each palabras as w}{#if w.oculta}<span class="oculta">{w.p}</span>{:else}{w.p}{/if}{/each}</p>
+        {#if aviso}<p class="nota-pie">{aviso}</p>{/if}
         <div class="niveles interruptor" role="group" aria-label={t('mem.nivel')}>
           {#each NIVELES as i}<button aria-pressed={nivel === i} onclick={() => (nivel = i)}>{t(`mem.n${i}`)}</button>{/each}
         </div>

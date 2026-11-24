@@ -13,7 +13,7 @@ const ANCHOS = [1360, 1280, 1100, 1024, 900, 800, 700, 600, 480, 380];
 
 // Corre dentro de la página: devuelve los pares de controles que se pisan
 function buscarSolapes() {
-  const SEL = 'button, a[href], select, input:not([type=hidden]):not([type=range]), textarea, [role=button], [role=tab], summary, .etiqueta-ui, .marca-main, .num';
+  const SEL = 'button, a[href], select, input:not([type=hidden]):not([type=range]), textarea, [role=button], [role=tab], summary, .etiqueta-ui, .marca-logo, .num';
   const visibles = [];
   for (const el of document.querySelectorAll(SEL)) {
     const c = el.getBoundingClientRect();
@@ -35,6 +35,14 @@ function buscarSolapes() {
     r.selectNodeContents(el);
     const t = r.getBoundingClientRect();
     const caja = t.width ? { l: Math.min(c.left, t.left), t: Math.min(c.top, t.top), r: Math.max(c.right, t.right), b: Math.max(c.bottom, t.bottom) } : { l: c.left, t: c.top, r: c.right, b: c.bottom };
+    // lo que un contenedor recorta (una franja que se desliza, por ejemplo) no se ve: cuenta solo la parte visible
+    for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) {
+      const ep = getComputedStyle(p);
+      if (ep.overflowX === 'visible' && ep.overflowY === 'visible') continue;
+      const q = p.getBoundingClientRect();
+      caja.l = Math.max(caja.l, q.left); caja.r = Math.min(caja.r, q.right); caja.t = Math.max(caja.t, q.top); caja.b = Math.min(caja.b, q.bottom);
+    }
+    if (caja.r - caja.l < 2 || caja.b - caja.t < 2) continue;
     visibles.push({ el, caja });
   }
   const nombre = (el) => `${el.tagName.toLowerCase()}${el.className && typeof el.className === 'string' ? '.' + el.className.trim().split(/\s+/).slice(0, 2).join('.') : ''}«${(el.textContent || el.getAttribute('aria-label') || el.value || '').trim().slice(0, 24)}»`;
@@ -86,7 +94,24 @@ await pag.route('https://api.nlt.to/**', (route) => {
 });
 
 await pag.goto(DIRECCION);
-await pag.waitForSelector('.inicio .marca-grande');
+// la primera vez sale la bienvenida: se salta, se pone un nombre y se entra
+await pag.waitForSelector('.bienvenida', { timeout: 20000 });
+await pag.click('.puerta-saltar');
+await pag.fill('#bv-nombre', 'Prueba');
+await pag.press('#bv-nombre', 'Enter');
+await pag.click('.seteo-ahora-no', { timeout: 20000 });
+await pag.waitForSelector('.inicio .marca-grande', { timeout: 20000 });
+// SKIN=imprenta|editorial: elige el skin desde Ajustes antes de medir (por defecto, Blanco)
+if (process.env.SKIN) {
+  await pag.click('.inicio-entrada >> nth=1');
+  await pag.click('.cab-acciones .cab-accion:last-child');
+  await pag.selectOption('#aj-skin', process.env.SKIN);
+  // COLOR=celeste|menta|rosa|cian: además elige el color del skin
+  if (process.env.COLOR) await pag.click(`.muestras-color button[data-color="${process.env.COLOR}"]`);
+  await pag.keyboard.press('Escape');
+  await pag.click('.cab-marca');
+  await pag.waitForSelector('.inicio .marca-grande');
+}
 
 // Cada pantalla se abre con clics, como una persona: se vuelve al inicio (la marca) y se entra por sus cinco
 // entradas; después se confirma que llegó antes de medir

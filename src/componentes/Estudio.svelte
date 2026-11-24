@@ -17,10 +17,13 @@
 </script>
 
 <aside class="estudio" class:abierta={ui.estudioAbierto} aria-label={t('barra.estudio')} hidden={!ui.estudioAbierto}>
-  <div class="pestanas pestanas-estudio" role="tablist">
-    {#each PESTANAS as id}
-      <button role="tab" aria-selected={ui.pestana === id} onclick={() => (ui.pestana = id)}>{t(`tab.${id}`)}</button>
-    {/each}
+  <!-- la cruz va fuera de la franja de pestañas: si no caben y se desplazan, la cruz sigue a la vista -->
+  <div class="estudio-cabeza">
+    <div class="pestanas pestanas-estudio" role="tablist">
+      {#each PESTANAS as id}
+        <button role="tab" aria-selected={ui.pestana === id} onclick={() => (ui.pestana = id)}>{t(`tab.${id}`)}</button>
+      {/each}
+    </div>
     <button class="ico cerrar-estudio" onclick={() => (ui.estudioAbierto = false)} aria-label={t('tab.cerrar')}><Icono n="cerrar" /></button>
   </div>
   <div class="estudio-cuerpo" bind:this={cuerpo}>

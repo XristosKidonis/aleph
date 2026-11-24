@@ -5,20 +5,23 @@
   import Figura from './Figura.svelte';
   import { imagenesDe } from '../../lib/imagenesHistoria.js';
   import { PREGUNTAS, prueba } from '../../lib/evidencias.js';
+  import { preguntasHallazgos, hallazgo } from '../../lib/hallazgos.svelte.js';
   import { t, idioma } from '../../lib/i18n.svelte.js';
 
   let { verPrueba } = $props();
   const L = (x) => x?.[idioma()] ?? '';
   const OPCIONES = ['firme', 'discutido', 'falso'];
 
-  const barajar = () => [...PREGUNTAS].sort(() => Math.random() - 0.5);
+  // Las preguntas fijas más las que traen los hallazgos de cada semana
+  const barajar = () => [...PREGUNTAS, ...preguntasHallazgos()].sort(() => Math.random() - 0.5);
   let orden = $state(barajar());
   let i = $state(0);
   let elegida = $state(null);
   let aciertos = $state(0);
 
   const q = $derived(orden[i]);
-  const p = $derived(q ? prueba(q.prueba) : null);
+  const p = $derived(q ? prueba(q.prueba) ?? hallazgo(q.prueba) : null);
+  const imgs = $derived(!p ? [] : p.imagen ? [{ nombre: p.id, ...p.imagen }] : imagenesDe(p.id));
   const terminado = $derived(i >= orden.length);
   const bien = $derived(elegida === q?.respuesta);
   // la explicación: si es firme, lo que establece; si no, lo que no establece
@@ -55,8 +58,8 @@
       {/each}
     </div>
     {#if elegida}
-      <div class="quiz-veredicto" class:con-imagen={imagenesDe(p.id).length} aria-live="polite">
-        {#if imagenesDe(p.id).length}<Figura img={imagenesDe(p.id)[0]} />{/if}
+      <div class="quiz-veredicto" class:con-imagen={imgs.length} aria-live="polite">
+        {#if imgs.length}<Figura img={imgs[0]} />{/if}
         <div>
         <p class="quiz-resultado">{bien ? t('his.bien') : t('his.casi', { r: t(`his.op.${q.respuesta}`) })}</p>
         <p class="quiz-porque">{porque}</p>

@@ -2,8 +2,9 @@
   import { tick, untrack } from 'svelte';
   import Frontis from './Frontis.svelte';
   import LectorBarra from './LectorBarra.svelte';
-  import { ui, irA, abrirPestana, avisar, recargarCapitulo } from '../lib/ui.svelte.js';
+  import { ui, irA, abrirPestana, avisar, recargarCapitulo, desplazamiento } from '../lib/ui.svelte.js';
   import { usuario, ajustar, marcarLeido, indiceRetroenlaces } from '../lib/usuario.svelte.js';
+  import { sonar } from '../lib/sonidos.js';
   import { info, versionEstudio } from '../lib/biblia.js';
   import { LIBROS, clave, nombreRef, nombreLibro, capituloSiguiente } from '../lib/libros.js';
   import { t, idioma, fecha as fechaLocal } from '../lib/i18n.svelte.js';
@@ -19,7 +20,8 @@
   const leido = $derived(usuario.leidos[`${pos.libro}.${pos.cap}`]);
   const anterior = $derived(capituloSiguiente(pos.libro, pos.cap, -1));
   const siguiente = $derived(capituloSiguiente(pos.libro, pos.cap, 1));
-  const conGrabado = $derived(pos.cap === 1 && usuario.ajustes.grabados !== false);
+  // el grabado de Doré sobre el capítulo 1 solo si no se usan las portadas azules (que lo reemplazan)
+  const conGrabado = $derived(pos.cap === 1 && usuario.ajustes.grabados !== false && usuario.ajustes.portadas === false);
 
   let lector;
   let finEl;
@@ -29,6 +31,7 @@
   // En pantallas anchas, las notas y tu clave de colores van en una columna al costado, a la altura
   // de su versículo, como en una Biblia de márgenes anchos. En pantallas angostas van debajo del versículo.
   let anchoLector = $state(1200);
+  let estampa = $state(false); // el sello se estampa solo al marcar el capítulo, no cada vez que se abre
   $effect(() => {
     if (!lector) return;
     const ro = new ResizeObserver(([e]) => (anchoLector = e.contentRect.width));
@@ -251,16 +254,17 @@
       ui.seleccion = [v];
     }
     ui.ancla = v;
+    if (ui.seleccion.length) sonar('select');
     // si el versículo queda debajo de la barra de acciones, sube un poco el texto para que se vea
     requestAnimationFrame(() => {
       const abajo = el.getBoundingClientRect().bottom - (innerHeight - (innerWidth <= 760 ? 230 : 130));
-      if (abajo > 0 && ui.seleccion.length) lector.scrollBy({ top: abajo, behavior: 'smooth' });
+      if (abajo > 0 && ui.seleccion.length) lector.scrollBy({ top: abajo, behavior: desplazamiento() });
     });
   }
 
   function sello() {
     marcarLeido(pos.libro, pos.cap, !leido);
-    if (!leido) avisar(t('lector.amenAviso'));
+    if (!leido) { sonar('complete'); estampa = true; setTimeout(() => (estampa = false), 700); avisar(t('lector.amenAviso')); }
   }
 
   const fecha = (ms) => fechaLocal(ms, { day: 'numeric', month: 'long', year: 'numeric' });
@@ -378,7 +382,7 @@
 
       <footer class="amen" class:hecho={!!leido} class:pendiente={!leido} bind:this={finEl}>
         <button class="sello" onclick={sello} aria-pressed={!!leido} title={leido ? t('lector.quitarLeido') : t('lector.marcarLeido')}>
-          <span class="amen-palabra">{t('lec.amen')}</span>
+          <span class="amen-palabra" class:asienta={estampa}>{t('lec.amen')}</span>
           <span class="amen-estado">{leido ? t('lector.leidoEl', { fecha: fecha(leido) }) : t('lector.marcarLeido')}</span>
         </button>
         <nav class="cap-nav" aria-label={t('lector.capitulos')}>

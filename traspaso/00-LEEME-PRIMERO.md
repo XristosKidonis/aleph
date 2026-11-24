@@ -59,6 +59,7 @@
 | 11 | [`11-integracion-white-industrial.md`](11-integracion-white-industrial.md) | **Diseño vigente:** qué se integró, dónde quedó cada función, pruebas y pendientes |
 | 12 | [`12-criterio-reciente.md`](12-criterio-reciente.md) | **Criterio vigente del dueño** (v0.10 → v0.14.1): cómo pide y aprueba, qué quiere, qué corrigió |
 | 13 | [`13-novedades-v0.12-a-v0.14.md`](13-novedades-v0.12-a-v0.14.md) | **Qué se construyó de la v0.12.1 a la v0.14.1**, con los archivos de cada función, el entorno local y lo que falta verificar en el mundo real |
+| 14 | [`14-pulido-noviembre-2026.md`](14-pulido-noviembre-2026.md) | **Pulido del 22 de noviembre de 2026:** seguridad, conexión, carga, accesibilidad, «Un día como hoy», notas en Markdown, qué falta decidir e ideas nuevas |
 | — | [`imagenes/INDICE-DE-IMAGENES.md`](imagenes/INDICE-DE-IMAGENES.md) | Ficha de cada imagen |
 | — | `anexos/` | Documentos originales: `RESEARCH.md` (investigación inicial, con las 12 reglas de la IA), `PLAN-inicial.md` (plan del primer día, en parte desactualizado), `LEEME-del-repositorio.md` y `LEEME-de-marca.md` |
 

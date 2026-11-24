@@ -11,7 +11,8 @@ export async function guardarArchivo(nombre, contenido, filtro) {
     else await writeFile(ruta, contenido);
     return true;
   }
-  const blob = typeof contenido === 'string' ? new Blob([contenido], { type: 'application/json' }) : new Blob([contenido]);
+  const tipo = nombre.endsWith('.json') ? 'application/json' : 'text/markdown';
+  const blob = typeof contenido === 'string' ? new Blob([contenido], { type: `${tipo};charset=utf-8` }) : new Blob([contenido]);
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = nombre;

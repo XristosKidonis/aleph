@@ -9,19 +9,23 @@
   import Figura from '../historia/Figura.svelte';
   import { CABECERA, imagen } from '../../lib/imagenesHistoria.js';
   import { GRADOS, GRUPOS, pruebasDe } from '../../lib/evidencias.js';
-  import { ui } from '../../lib/ui.svelte.js';
+  import { hallazgos, cargarHallazgos, esNuevo, cuantosNuevos, marcarVisto } from '../../lib/hallazgos.svelte.js';
+  import { ui, desplazamiento } from '../../lib/ui.svelte.js';
   import { t } from '../../lib/i18n.svelte.js';
 
-  const PESTANAS = ['jesus', 'juan', 'quiz', 'tiempo'];
+  const PESTANAS = ['jesus', 'juan', 'hallazgo', 'quiz', 'tiempo'];
+  cargarHallazgos();
   const figura = $derived(ui.historia.pestana === 'juan' ? 'juan' : 'jesus');
 
   async function verPrueba(p) {
     ui.historia.pestana = p.figura;
     ui.historia.abierta = p.id;
     await tick();
-    document.getElementById(`prueba-${p.id}`)?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    document.getElementById(`prueba-${p.id}`)?.scrollIntoView({ block: 'start', behavior: desplazamiento() });
   }
   const alternar = (id) => (ui.historia.abierta = ui.historia.abierta === id ? null : id);
+  // Un hallazgo deja de ser «nuevo» cuando se abre
+  $effect(() => { if (ui.historia.pestana === 'hallazgo' && ui.historia.abierta) marcarVisto(ui.historia.abierta); });
 </script>
 
 <section class="pagina-vista historia" aria-labelledby="his-titulo">
@@ -42,6 +46,7 @@
         <button class="filtro" role="tab" aria-selected={ui.historia.pestana === id}
           onclick={() => { ui.historia.pestana = id; ui.historia.abierta = null; }}>
           {t(`his.tab.${id}`)}{#if id === 'jesus' || id === 'juan'} <small>{String(pruebasDe(id).length).padStart(2, '0')}</small>{/if}
+          {#if id === 'hallazgo' && hallazgos.lista.length} <small>{String(hallazgos.lista.length).padStart(2, '0')}</small>{#if cuantosNuevos()}<span class="his-punto" title={t('his.hayNuevos')}></span>{/if}{/if}
         </button>
       {/each}
     </div>
@@ -66,6 +71,18 @@
       {/if}
     {/each}
     <p class="nota-pie his-fuentes">{t('his.creditos')}</p>
+  {:else if ui.historia.pestana === 'hallazgo'}
+    <p class="his-intro his-intro-figura">{t('his.intro.hallazgo')}</p>
+    <h2 class="his-grupo"><span>{t('his.tab.hallazgo')}</span><small>{t('his.g.hallazgo.d')}</small></h2>
+    {#if hallazgos.lista.length}
+      <ol class="his-lista">
+        {#each hallazgos.lista as p (p.id)}
+          <Prueba {p} nuevo={esNuevo(p.id)} abierta={ui.historia.abierta === p.id} alternar={() => alternar(p.id)} />
+        {/each}
+      </ol>
+    {:else}
+      <p class="nota-pie his-vacio">{t('his.hallazgosVacio')}</p>
+    {/if}
   {:else if ui.historia.pestana === 'quiz'}
     <Quiz {verPrueba} />
   {:else}

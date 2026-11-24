@@ -6,8 +6,18 @@ import { referenciasEnTexto, clave } from './libros.js';
 
 export const AJUSTES_INICIALES = {
   idioma: 'es',           // idioma de la interfaz: es | en
+  nombre: '',             // cómo te llamas: el Inicio te saluda («Hola, Xristos»)
+  bienvenido: false,      // ya pasó por la bienvenida de la primera vez
+  candado: null,          // contraseña al abrir: { sal, hash, vueltas } (ver candado.js); nunca la contraseña
+  ordenInicio: null,      // orden de las entradas del Inicio (lo fija el seteo: Historia o Láminas suben); null = el de siempre
+  sonidos: true,
+  movimiento: 'inmersivo', // inmersivo (parallax y transiciones con profundidad) | sereno (solo desenfoques suaves) | quieto          // sonidos Zen en momentos puntuales (lib/sonidos.js)
+  estudioAlAbrir: false,  // al entrar a leer, el estudio se abre junto al texto (para quien estudia; solo en pantallas anchas)
   mostrarInicio: true,    // pantalla de inicio al abrir
   grabados: false,        // grabado de Doré a toda página al abrir cada libro (opcional, en Ajustes)
+  portadas: true,         // portada a pantalla completa al abrir otro libro (cada skin la dibuja a su modo)
+  skin: 'blanco',         // aspecto de la app: blanco (el de siempre) | imprenta | editorial
+  colorSkin: {},          // color elegido por skin: { imprenta: 'celeste', editorial: 'rosa' }; sin dato, el primero de COLORES_SKIN
   version: 'NTV',
   paralela: '',
   tema: 'papel',          // papel (claro) | cuero (oscuro, solo el lector) | sistema
@@ -24,6 +34,13 @@ export const AJUSTES_INICIALES = {
   velocidadVoz: 1,
   pos: { libro: 1, cap: 1 },
   historial: [],
+};
+
+// Colores que ofrece cada skin; el primero es el de por defecto. El hex solo pinta la muestra en Ajustes:
+// los tonos de verdad (y sus grises) viven en skins.css bajo [data-color].
+export const COLORES_SKIN = {
+  imprenta: [{ id: 'amarillo', hex: '#F2CE2E' }, { id: 'celeste', hex: '#A9D8F0' }, { id: 'menta', hex: '#A9E2C0' }],
+  editorial: [{ id: 'lima', hex: '#D8F24A' }, { id: 'rosa', hex: '#FDD0E0' }, { id: 'cian', hex: '#B9E8F0' }],
 };
 
 export const usuario = $state({
@@ -87,9 +104,23 @@ export async function iniciarUsuario() {
 }
 
 // ---------- ajustes ----------
+// Los deslizadores (tamaño, interlineado, velocidad) mandan un valor por cada píxel que se arrastra: se
+// aplican al instante y se guardan una sola vez, cuando la mano se detiene. Al cerrar se guarda lo pendiente.
+const ARRASTRABLES = new Set(['tamano', 'interlineado', 'velocidadVoz']);
+const pendientes = new Map(); // clave -> temporizador
+const escribirAjuste = (k) => {
+  pendientes.delete(k);
+  ejecutar('INSERT OR REPLACE INTO ajustes (clave, valor, actualizado) VALUES (?, ?, ?)', [k, JSON.stringify(usuario.ajustes[k]), ahora()]);
+};
+if (typeof window !== 'undefined') {
+  window.addEventListener('pagehide', () => { for (const [k, reloj] of pendientes) { clearTimeout(reloj); escribirAjuste(k); } });
+}
+
 export function ajustar(k, v) {
   usuario.ajustes[k] = v;
-  ejecutar('INSERT OR REPLACE INTO ajustes (clave, valor, actualizado) VALUES (?, ?, ?)', [k, JSON.stringify(v), ahora()]);
+  clearTimeout(pendientes.get(k));
+  if (ARRASTRABLES.has(k)) pendientes.set(k, setTimeout(() => escribirAjuste(k), 350));
+  else escribirAjuste(k);
 }
 
 export function irA(libro, cap) {
@@ -131,7 +162,6 @@ export function borrarNota(id) {
   ejecutar('UPDATE notas SET borrado = 1, actualizado = ? WHERE id = ?', [ahora(), id]);
 }
 
-export const notasDe = (k) => usuario.notas.filter((n) => n.ref === k);
 
 // Retroenlaces: versículo -> notas (de otros versículos) que lo mencionan
 export function indiceRetroenlaces(notas) {
@@ -234,7 +264,7 @@ function guardarMemoria(m) {
 // ---------- respaldo ----------
 export function exportar() {
   return {
-    app: 'Chi-Ro Heirs',
+    app: 'Aleph',
     formato: 1,
     exportado: new Date().toISOString(),
     subrayados: usuario.subrayados,
@@ -243,19 +273,24 @@ export function exportar() {
     memoria: usuario.memoria,
     leidos: usuario.leidos,
     cintas: usuario.cintas,
-    ajustes: usuario.ajustes,
+    // las claves de Tyndale y Bible Brain son personales: no viajan en un archivo que se puede compartir
+    // el candado tampoco: es de este equipo
+    ajustes: { ...usuario.ajustes, claveNLT: 'TEST', claveBibleBrain: '', candado: null },
   };
 }
 
 // Fusiona un respaldo sin borrar lo existente. Devuelve cuántos elementos se añadieron.
 export function importar(datos) {
-  if (!datos || datos.app !== 'Chi-Ro Heirs') throw new Error('El archivo no es un respaldo de Chi-Ro Heirs.');
+  if (!datos || !['Aleph', 'Chi-Ro Heirs'].includes(datos.app)) throw new Error('El archivo no es un respaldo de Aleph.');
   let n = 0;
   for (const [k, color] of Object.entries(datos.subrayados || {})) {
     if (!usuario.subrayados[k]) { subrayar([k], color); n++; }
   }
   const ids = new Set(usuario.notas.map((x) => x.id));
-  for (const nota of datos.notas || []) {
+  const lista = (x) => (Array.isArray(x) ? x : []);
+  for (const nota of lista(datos.notas)) {
+    // un respaldo editado a mano o dañado no puede meter filas que rompan la app: id, ref y texto deben ser texto
+    if (typeof nota?.id !== 'string' || typeof nota.ref !== 'string' || typeof nota.texto !== 'string') continue;
     if (ids.has(nota.id)) continue;
     usuario.notas.push({ ...nota });
     ejecutar(`INSERT OR REPLACE INTO notas (id, ref, hasta, tipo, texto, respondida, creada, actualizado, borrado)
@@ -264,14 +299,14 @@ export function importar(datos) {
     n++;
   }
   usuario.notas.sort((a, b) => b.creada - a.creada);
-  for (const m of datos.memoria || []) if (memorizar(m.ref)) n++;
+  for (const m of lista(datos.memoria)) if (memorizar(m.ref)) n++;
   for (const k of Object.keys(datos.leidos || {})) {
     if (!usuario.leidos[k]) { const [b, c] = k.split('.').map(Number); marcarLeido(b, c); n++; }
   }
-  for (const g of datos.guardados || []) {
+  for (const g of lista(datos.guardados)) {
     if (g?.clave && !estaGuardado(g.clave)) { alternarGuardado([g.clave]); n++; }
   }
-  for (const c of datos.cintas || []) {
+  for (const c of lista(datos.cintas)) {
     if (!usuario.cintas.some((x) => x.libro === c.libro && x.cap === c.cap)) { alternarCinta(c.libro, c.cap); n++; }
   }
   return n;

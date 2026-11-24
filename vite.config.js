@@ -42,10 +42,38 @@ const servirBiblias = {
   },
 };
 
+// Política de seguridad de la versión web: solo corre el código de la propia app, y solo se conecta con los
+// servicios que usa (Tyndale, Bible Brain, Hugging Face y jsDelivr para la voz natural).
+// - 'wasm-unsafe-eval': SQLite y ONNX Runtime son WebAssembly.
+// - 'unsafe-eval': el motor de pronunciación de la voz natural se ejecuta con new Function (se comprueba su
+//   huella SHA-256 antes; ver vozNeural.js).
+// - style 'unsafe-inline': Svelte escribe estilos en línea (style:width…).
+// - media https:: el audio de Bible.is llega de su CDN, con URLs firmadas.
+const CSP = [
+  "default-src 'self'",
+  "script-src 'self' 'wasm-unsafe-eval' 'unsafe-eval' blob:",
+  "connect-src 'self' https://api.nlt.to https://4.dbt.io https://huggingface.co https://*.huggingface.co https://*.hf.co https://cdn.jsdelivr.net",
+  "img-src 'self' data: blob:",
+  "media-src 'self' blob: data: https:",
+  "style-src 'self' 'unsafe-inline'",
+  "font-src 'self' data:",
+  "worker-src 'self' blob:",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'none'",
+].join('; ');
+const politicaWeb = {
+  name: 'politica-web',
+  transformIndexHtml(html) {
+    if (!process.env.WEB) return html;
+    return html.replace('<head>', `<head>\n    <meta http-equiv="Content-Security-Policy" content="${CSP}" />`);
+  },
+};
+
 // WEB=1 arma la versión web de prueba (GitHub Pages), que vive en /aleph/ (el repo se llamaba chi-ro-heirs hasta 2026-11-24).
 export default defineConfig({
   base: process.env.WEB ? '/aleph/' : '/',
-  plugins: [svelte(), servirBiblias],
+  plugins: [svelte(), servirBiblias, politicaWeb],
   clearScreen: false,
   server: { port: 1420, strictPort: true },
   envPrefix: ['VITE_', 'TAURI_ENV_'],

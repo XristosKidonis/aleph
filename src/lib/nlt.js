@@ -1,8 +1,10 @@
 // Cliente de la API oficial de Tyndale (api.nlt.to): NTV en español y NLT en inglés.
 // Términos: uso personal no comercial. El texto se guarda solo en memoria durante la sesión.
 import { LIBROS, normalizar } from './libros.js';
-import { pedir, bdBiblias } from './bd.js';
+import { pedir } from './bd.js';
+import { versiculosDe } from './conteos.js';
 import { t } from './i18n.svelte.js';
+import { usuario, ajustar } from './usuario.svelte.js';
 
 const BASE = 'https://api.nlt.to/api/passages';
 const cache = new Map(); // solo en memoria: la licencia no cubre guardar el texto en disco
@@ -88,36 +90,36 @@ function nombresLibro(version, libro) {
   if (version === 'NTV') opciones.push(l.nombre, normalizar(l.nombre).replace(/^./, (c) => c.toUpperCase()));
   return [...new Set(opciones)];
 }
-const formatoQueFunciona = {}; // versión -> índice del nombre que respondió con texto
-
-// Cuántos versículos tiene el capítulo (según la versificación de la KJV incluida)
-async function versiculosDelCapitulo(libro, cap) {
-  try {
-    const db = await bdBiblias();
-    const [f] = await db.select('SELECT MAX(vers) AS n FROM versiculos WHERE version = ? AND libro = ? AND cap = ?', ['KJV', libro, cap]);
-    return Number(f?.n) || 0;
-  } catch {
-    return 0;
-  }
+// versión -> índice del nombre que respondió con texto. Se recuerda entre sesiones (es solo un número, no
+// texto bíblico): así no se gastan consultas de la clave de prueba probando nombres en cada arranque.
+// Se lee al usarlo (no al cargar el módulo), porque los ajustes guardados llegan después.
+const formatoGuardado = (version) => usuario.ajustes.formatoNLT?.[version];
+function recordarFormato(version, i) {
+  if (!usuario.listo || formatoGuardado(version) === i) return;
+  ajustar('formatoNLT', { ...(usuario.ajustes.formatoNLT || {}), [version]: i });
 }
 
 async function pedirPasaje(version, ref, clave) {
   const url = `${BASE}?ref=${encodeURIComponent(ref)}&version=${version}&key=${encodeURIComponent(clave || 'TEST')}`;
-  // un corte de red pasajero no debe dejar el capítulo en blanco: se reintenta dos veces antes de rendirse
+  // un corte de red pasajero o un servidor caído un momento (5xx) no debe dejar el capítulo en blanco: se
+  // reintenta con esperas crecientes. Un 429 (límite diario) no se reintenta: gastaría más consultas.
   let r;
   let fallo;
-  for (const espera of [0, 700, 2000]) {
-    if (espera) await new Promise((listo) => setTimeout(listo, espera));
+  for (const espera of [0, 800, 2500, 6000]) {
+    if (espera) await new Promise((listo) => setTimeout(listo, espera + Math.random() * 300));
     try {
       r = await pedir(url);
-      break;
+      fallo = null;
+      if (r.status < 500) break;
     } catch (e) {
+      r = null;
       fallo = e;
     }
   }
   if (!r) throw new Error(t('nlt.sinConexion', { v: version, e: fallo?.message || fallo }));
   if (!r.ok) {
-    throw new Error(r.status === 401 || r.status === 403 ? t('nlt.clave') : t('nlt.estado', { s: r.status }));
+    if (r.status === 401 || r.status === 403) throw new Error(t('nlt.clave'));
+    throw new Error(r.status === 429 ? t('nlt.limite') : t('nlt.estado', { s: r.status }));
   }
   const html = await r.text();
   return { datos: parsearNLT(html), largo: html.length };
@@ -128,14 +130,14 @@ export async function capituloNLT(version, libro, cap, clave) {
   if (cache.has(id)) return cache.get(id);
 
   // con la clave de prueba, los capítulos de más de 50 versículos se piden por tramos
-  const total = !clave || clave === 'TEST' ? await versiculosDelCapitulo(libro, cap) : 0;
+  const total = !clave || clave === 'TEST' ? versiculosDe(libro, cap) : 0;
   const tramos = [];
   if (total > MAX_PRUEBA) for (let a = 1; a <= total; a += MAX_PRUEBA) tramos.push(`:${a}-${Math.min(total, a + MAX_PRUEBA - 1)}`);
   else tramos.push('');
 
   const nombres = nombresLibro(version, libro);
-  const orden = formatoQueFunciona[version] != null
-    ? [formatoQueFunciona[version], ...nombres.keys()].filter((x, i, a) => a.indexOf(x) === i)
+  const orden = nombres[formatoGuardado(version)] != null
+    ? [formatoGuardado(version), ...nombres.keys()].filter((x, i, a) => a.indexOf(x) === i)
     : [...nombres.keys()];
 
   let ultimoLargo = 0;
@@ -150,7 +152,7 @@ export async function capituloNLT(version, libro, cap, clave) {
       if (!datos.versos.length) break; // este nombre no funciona: se prueba el siguiente
     }
     if (versos.size) {
-      formatoQueFunciona[version] = i;
+      recordarFormato(version, i);
       const resultado = { versos: marcarOmitidos([...versos.values()].sort((a, b) => a.v - b.v)), titulos };
       cache.set(id, resultado);
       return resultado;

@@ -135,7 +135,6 @@ export function referenciasEnTexto(texto) {
 }
 
 export const clave = (b, c, v) => `${b}.${c}.${v}`;
-export const claveCap = (b, c) => `${b}.${c}`;
 
 export function desclave(k) {
   const [b, c, v] = String(k).split('.').map(Number);
@@ -151,10 +150,6 @@ export function nombreRef(b, c, v, hasta) {
   return s;
 }
 
-export function abrevRef(b, c, v) {
-  const l = LIBROS[b - 1];
-  return `${abrevLibro(l)} ${c}${v ? ':' + v : ''}`;
-}
 
 // "43.3.16-43.3.18" -> {libro, cap, v, hasta}
 export function parsearRango(s) {

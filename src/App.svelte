@@ -16,23 +16,49 @@
   import Dialogo from './componentes/Dialogo.svelte';
   import Inicio from './componentes/Inicio.svelte';
   import Actualizacion from './componentes/Actualizacion.svelte';
+  import Portada from './componentes/Portada.svelte';
+  import Bienvenida from './componentes/Bienvenida.svelte';
+  import Candado from './componentes/Candado.svelte';
+  import Seteo from './componentes/Seteo.svelte';
+  import VentanaBotones, { hayVentana, ladoVentana } from './componentes/VentanaBotones.svelte';
+  import { pidioQuitarCandado } from './lib/candado.js';
   import { buscarAlAbrir } from './lib/actualizar.svelte.js';
-  import { ui, irA, recargarCapitulo } from './lib/ui.svelte.js';
-  import { usuario, iniciarUsuario, ajustar } from './lib/usuario.svelte.js';
+  import { ui, irA, recargarCapitulo, avisar } from './lib/ui.svelte.js';
+  import { usuario, iniciarUsuario, ajustar, COLORES_SKIN } from './lib/usuario.svelte.js';
   import { cargarVersiones, info } from './lib/biblia.js';
   import { capituloSiguiente, fijarIdiomaLibros } from './lib/libros.js';
   import { t } from './lib/i18n.svelte.js';
   import { abrirEnNavegador } from './lib/archivos.js';
+  import { sonar } from './lib/sonidos.js';
   import { esTauri } from './lib/bd.js';
 
   let listo = $state(false);
+  // Sin cabecera (arranque, bienvenida, candado, Inicio, modo Calma) los botones de la ventana van en una
+  // franja fina arriba, que también sirve para arrastrarla
+  const sinCabecera = $derived(!listo || !!ui.puerta || ui.vista === 'inicio' || (ui.vista === 'lector' && usuario.ajustes.calma));
+  if (hayVentana && typeof document !== 'undefined') document.documentElement.dataset.ventana = ladoVentana;
   let fallo = $state('');
 
   onMount(async () => {
     try {
-      await Promise.all([cargarVersiones(), iniciarUsuario()]);
+      const versiones = cargarVersiones();
+      versiones.catch(() => {}); // su error se atiende abajo; sin esto, si falla mientras se cargan tus datos, queda «sin atender»
+      await iniciarUsuario();
+      // ¿olvidaste la contraseña y dejaste el archivo para quitar el candado? (ver candado.js)
+      if (usuario.ajustes.candado && await pidioQuitarCandado()) {
+        ajustar('candado', null);
+        avisar(t('cd.quitado'));
+      }
+      // En la web la base bíblica pesa unos 67 MB comprimida. Si se lee en la NTV o la NLT (que vienen de
+      // internet) no hace falta esperarla: la app abre ya y la base sigue bajando por detrás. Lo que la
+      // necesita (búsqueda, estudio, versiones incluidas) la espera solo cuando se usa.
+      if (esTauri || !info(usuario.ajustes.version)?.enLinea) await versiones;
+      else versiones.catch((e) => avisar(e.message || String(e), true)); // la NTV sigue funcionando
       if (!info(usuario.ajustes.version)) usuario.ajustes.version = 'NTV';
       ui.vista = usuario.ajustes.mostrarInicio ? 'inicio' : 'lector';
+      // antes de todo: la bienvenida la primera vez; después, el candado si pusiste contraseña
+      if (!usuario.ajustes.bienvenido) { ui.puerta = 'bienvenida'; ui.vista = 'inicio'; }
+      else if (usuario.ajustes.candado) ui.puerta = 'candado';
       listo = true;
       buscarAlAbrir();
     } catch (e) {
@@ -53,13 +79,24 @@
     fijarIdiomaLibros(usuario.ajustes.idioma);
     return usuario.ajustes.idioma;
   });
+  // nivel de movimiento: lo leen parallax.js, las transiciones (ui.svelte.js) y app.css
+  $effect(() => { document.documentElement.dataset.movimiento = usuario.ajustes.movimiento || 'inmersivo'; });
   $effect(() => { document.documentElement.lang = idiomaUI === 'en' ? 'en' : 'es'; });
 
   // Tema y tipografía. Todo es claro; el modo oscuro es solo del lector (y sus paneles).
   $effect(() => {
     const r = document.documentElement;
     const { tema, tamano, interlineado, fuente } = usuario.ajustes;
+    // la bienvenida y sus preguntas van siempre en Blanco: cada quien elige su aspecto después, en Ajustes
+    const skin = ui.puerta === 'bienvenida' || ui.puerta === 'seteo' ? 'blanco' : usuario.ajustes.skin;
     const enLector = ui.vista === 'lector';
+    // skin: una capa de colores, letras y diagramación encima del diseño base (skins.css)
+    if (skin === 'imprenta' || skin === 'editorial') r.dataset.skin = skin;
+    else delete r.dataset.skin;
+    // color del skin: solo se marca si no es el primero (el de por defecto ya está en skins.css)
+    const color = usuario.ajustes.colorSkin?.[skin];
+    if (COLORES_SKIN[skin]?.slice(1).some((c) => c.id === color)) r.dataset.color = color;
+    else delete r.dataset.color;
     if (tema === 'sistema' && enLector) r.removeAttribute('data-theme');
     else r.setAttribute('data-theme', tema === 'cuero' && enLector ? 'dark' : 'light');
     r.style.setProperty('--tam-texto', `${tamano}px`);
@@ -68,6 +105,7 @@
   });
 
   function tecla(e) {
+    if (ui.puerta) return; // ni buscador ni atajos antes de entrar
     const escribiendo = /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) || e.target.isContentEditable;
     if ((e.key === 'k' || e.key === 'K') && (e.metaKey || e.ctrlKey)) { e.preventDefault(); ui.buscadorAbierto = true; return; }
     if (e.key === 'Escape') {
@@ -90,7 +128,25 @@
   }
 
   // En la app de escritorio los enlaces externos se abren en tu navegador
+  // Sonidos Zen (lib/sonidos.js). Un toque en las entradas del Inicio, la navegación y las puertas; el resto de
+  // los momentos (abrir, cerrar, pasar de capítulo) se oyen por los efectos de abajo o en su componente.
+  const CON_TOQUE = '.inicio-entrada, .cab-link, .cab-marca, .seteo-opcion, .puerta-entrar, .inicio-empezar button';
+  let abiertoAntes = false;
+  $effect(() => {
+    const abierto = !!(ui.dialogo || ui.buscadorAbierto || ui.menuBarra);
+    if (abierto !== abiertoAntes) sonar(abierto ? 'open' : 'close');
+    abiertoAntes = abierto;
+  });
+  let capAntes = '';
+  $effect(() => {
+    const p = usuario.ajustes.pos;
+    const k = listo && p ? `${p.libro}.${p.cap}` : '';
+    if (capAntes && k && k !== capAntes && ui.vista === 'lector') sonar('swipe');
+    capAntes = k;
+  });
+
   function clic(e) {
+    if (e.target.closest(CON_TOQUE)) sonar('press');
     const a = e.target.closest('a[target="_blank"]');
     if (a && esTauri) {
       e.preventDefault();
@@ -100,6 +156,10 @@
 </script>
 
 <svelte:window onkeydown={tecla} onclick={clic} />
+
+{#if hayVentana && sinCabecera}
+  <div class="franja-ventana" class:a-la-derecha={ladoVentana === 'derecha'} data-tauri-drag-region><VentanaBotones /></div>
+{/if}
 
 {#if !listo}
   <div class="arranque">
@@ -112,7 +172,9 @@
   </div>
 {:else}
   {#key idiomaUI}
-  {#if ui.vista === 'inicio'}
+  {#if ui.puerta}
+    {#if ui.puerta === 'bienvenida'}<Bienvenida />{:else if ui.puerta === 'seteo'}<Seteo />{:else}<Candado />{/if}
+  {:else if ui.vista === 'inicio'}
     <Inicio />
   {:else}
     {@const calma = ui.vista === 'lector' && usuario.ajustes.calma}
@@ -141,11 +203,14 @@
       {#if !calma}<NavMovil />{/if}
     </div>
   {/if}
+  {#if !ui.puerta}
   <Buscador />
   <Dialogo />
   <Actualizacion />
   <Visor />
-  {#if ui.aviso}<div class="aviso" class:error={ui.aviso.error} role="status">{ui.aviso.texto}</div>{/if}
+  {/if}
+  {#if ui.portada}{#key ui.portada}<Portada libro={ui.portada} />{/key}{/if}
+  {#if ui.aviso}<div class="aviso" class:error={ui.aviso.error} class:arriba={ui.vista === 'lector' && ui.seleccion.length > 0} role="status">{ui.aviso.texto}</div>{/if}
   {#if usuario.error}<div class="aviso error" role="alert">{t('app.noGuardar', { e: usuario.error })}</div>{/if}
   {/key}
 {/if}

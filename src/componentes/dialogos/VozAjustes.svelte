@@ -24,7 +24,10 @@
     listas = r;
     motorListo = Object.values(r).some(Boolean);
   }
-  $effect(() => { if (motor === 'natural') revisar(); });
+  $effect(() => { revisar(); }); // también para decir en el selector si la voz natural ya está lista
+  // qué le falta a cada camino para sonar (vacío: listo)
+  const falta = (m) => (m === 'natural' && !motorListo ? t('vm.faltaDescargar')
+    : m === 'narrada' && !(a.claveBibleBrain && (a.audioEs || a.audioEn)) ? t('vm.faltaClave') : '');
   const campoNeural = (lang) => (lang === 'en' ? 'vozNeuralEn' : 'vozNeuralEs');
 
   async function descargar(v) {
@@ -104,6 +107,7 @@
     <button class="amb-musica" role="radio" aria-checked={motor === m} onclick={() => ajustar('motorVoz', m)}>
       <span class="amb-m-nombre">{t(`vm.${m}`)}</span>
       <span class="amb-m-desc">{t(`vm.${m}.d`)}</span>
+      {#if falta(m)}<span class="amb-m-desc vm-falta">{falta(m)}</span>{/if}
     </button>
   {/each}
 </div>

@@ -403,7 +403,8 @@ def cargar_interlineal(cur, rutas):
 def limpiar_definicion(html):
     html = re.sub(r"<ref='[^']*'>(.*?)</ref>", r'\1', html)
     html = re.sub(r'<(?!/?(b|i|br)\b)[^>]*>', '', html, flags=re.I)
-    return re.sub(r'<br\s*/?>', '<br>', html, flags=re.I).strip()
+    # las etiquetas que quedan van sin atributos: un <b onmouseover=…> no debe llegar a la app
+    return re.sub(r'<(/?)(b|i|br)\b[^>]*>', lambda m: f'<{m.group(1)}{m.group(2).lower()}>', html, flags=re.I).strip()
 
 
 def cargar_lexicos(cur, rutas):
