@@ -6,7 +6,7 @@ Por eso la regla de oro es la exactitud: es una app bíblica, y una ficha equivo
 
 ## Dónde está todo
 - Repo de la app: `F:\Chi-RO Heirs\chi-ro-heirs`. **No toques nada ahí**: hay otras sesiones con cambios sin guardar. Solo lees y corres scripts.
-- Las fichas publicadas viven en la rama `contenido` del repo (repo público `XristosKidonis/chi-ro-heirs`), en `historia/hallazgos.json`. La app las baja de ahí sin actualizarse.
+- Las fichas publicadas viven en la rama `contenido` del repo (repo público `XristosKidonis/aleph`, que se llamaba chi-ro-heirs), en `historia/hallazgos.json`. La app las baja de ahí sin actualizarse.
 - Copia de trabajo de esa rama: `F:\Chi-RO Heirs\contenido-historia` (un worktree de git). Ahí escribes, commiteas y haces push.
 - Registro de lo que se eligió y se descartó: `historia/registro.md`, en la misma rama.
 

@@ -1,7 +1,7 @@
 name: Versión web de prueba
 
 # Publica la app en GitHub Pages cada vez que cambia main, para probarla en el navegador
-# sin instalar nada: https://xristoskidonis.github.io/chi-ro-heirs/
+# sin instalar nada: https://xristoskidonis.github.io/aleph/
 on:
   push:
     branches: [main]

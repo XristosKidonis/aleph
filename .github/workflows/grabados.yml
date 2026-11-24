@@ -80,7 +80,7 @@ jobs:
       - name: Gutenberg (Doré Bible Gallery, completo)
         run: |
           mkdir -p fuente/gutenberg
-          curl -fsSL -A "chi-ro-heirs" -o g.zip https://www.gutenberg.org/cache/epub/8710/pg8710-h.zip
+          curl -fsSL -A "aleph" -o g.zip https://www.gutenberg.org/cache/epub/8710/pg8710-h.zip
           unzip -q g.zip -d fuente/gutenberg
           rm g.zip
 
@@ -88,7 +88,7 @@ jobs:
         run: |
           mkdir -p fuente/commons
           for cat in "Doré's_English_Bible" "The_Holy_Bible_(Doré)" "Gustave_Doré's_Bible_illustrations" "Illustrations_of_the_Bible_by_Gustave_Doré" "La_Grande_Bible_de_Tours"; do
-            curl -fsSL -A "chi-ro-heirs/1.0 (https://github.com/XristosKidonis/chi-ro-heirs)" \
+            curl -fsSL -A "aleph/1.0 (https://github.com/XristosKidonis/aleph)" \
               "https://commons.wikimedia.org/w/api.php?action=query&format=json&generator=categorymembers&gcmtitle=Category:${cat}&gcmtype=file&gcmlimit=500&prop=imageinfo&iiprop=url|size&iiurlwidth=1600" \
               -o "fuente/commons/${cat}.json" || true
             sleep 1
@@ -100,7 +100,7 @@ jobs:
           mkdir -p fuente/alta
           python3 - <<'EOF'
           import json, urllib.parse, urllib.request, time, pathlib
-          UA = {'User-Agent': 'chi-ro-heirs/1.0 (https://github.com/XristosKidonis/chi-ro-heirs)'}
+          UA = {'User-Agent': 'aleph/1.0 (https://github.com/XristosKidonis/aleph)'}
           for linea in pathlib.Path('herramientas/grabados.txt').read_text(encoding='utf-8').splitlines():
               linea = linea.split('#')[0].strip()
               if not linea or '=' not in linea:

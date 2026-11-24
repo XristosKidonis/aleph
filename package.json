@@ -1,9 +1,9 @@
 {
-  "name": "chi-ro-heirs",
+  "name": "aleph",
   "private": true,
-  "version": "0.15.4",
+  "version": "0.15.5",
   "type": "module",
-  "description": "Chi-Ro Heirs: lector bíblico personal, ligero y local",
+  "description": "Aleph: lector bíblico personal, ligero y local",
   "scripts": {
     "datos": "python3 herramientas/construir_datos.py",
     "dev": "vite",

@@ -70,9 +70,9 @@ const politicaWeb = {
   },
 };
 
-// WEB=1 arma la versión web de prueba (GitHub Pages), que vive en /chi-ro-heirs/.
+// WEB=1 arma la versión web de prueba (GitHub Pages), que vive en /aleph/ (el repo se llamaba chi-ro-heirs hasta 2026-11-24).
 export default defineConfig({
-  base: process.env.WEB ? '/chi-ro-heirs/' : '/',
+  base: process.env.WEB ? '/aleph/' : '/',
   plugins: [svelte(), servirBiblias, politicaWeb],
   clearScreen: false,
   server: { port: 1420, strictPort: true },

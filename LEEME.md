@@ -10,7 +10,7 @@ La carpeta [`traspaso/`](traspaso/00-LEEME-PRIMERO.md) explica cómo se construy
 
 ## Probar en el navegador
 
-Versión web de prueba, sin instalar nada: **https://xristoskidonis.github.io/chi-ro-heirs/**
+Versión web de prueba, sin instalar nada: **https://xristoskidonis.github.io/aleph/**
 Se actualiza sola cada vez que cambia `main` (tarda 2 o 3 minutos). La primera visita descarga unos 170 MB de Biblias; después el navegador las guarda en su caché (puede volver a bajarlas si la limpia).
 
 **En iPhone o iPad** (todavía no hay app para iOS): abre el enlace en Safari → Compartir → **Agregar a pantalla de inicio**. Queda con su icono, como una app. Tus notas y subrayados de la web viven solo en ese navegador, separados de los de la app de escritorio.
@@ -31,7 +31,7 @@ Para generar una versión nueva: pestaña **Actions** → **Compilar instaladore
 
 | Función | Detalle |
 |---|---|
-| Inicio | La marca CHI—RO y tres entradas: Continuar leyendo, Biblioteca (los 66 libros como cubiertas tipográficas, con filtro y búsqueda) y Mi archivo (guardados, cintas, subrayados y notas en un índice) |
+| Inicio | La marca Aleph y tres entradas: Continuar leyendo, Biblioteca (los 66 libros como cubiertas tipográficas, con filtro y búsqueda) y Mi archivo (guardados, cintas, subrayados y notas en un índice) |
 | Versiones | **NTV** y **NLT** en línea (API oficial de Tyndale). Sin conexión, dentro de la app: en español **RV1909, PDT, VBL, BES, RV1865**; en inglés **BSB, WEB, FBV, BBE, LSV, KJV, ASV, YLT, Darby, Ginebra 1599**. Cada una con su tipo de traducción (de literal a paráfrasis), año y descripción |
 | Ambiente | Música grabada dentro de la app (Piano: Bach, Satie, Chopin, Schumann; Himnos; Coral y cuerdas), con el crédito de cada pista, anterior/siguiente y lista, y sonidos (lluvia, chimenea, viento, olas), sin internet; temporizador o apagado al terminar el capítulo; baja sola cuando la app lee en voz alta. Spotify se abre afuera: tu playlist o una búsqueda |
 | Clave de colores y margen | Significado propio para cada color de subrayado (con imagen para compartir) y modo margen con las notas al costado del versículo |
@@ -79,7 +79,7 @@ Por la licencia, el texto de la NTV y la NLT no se guarda en disco: se pide al l
 
 ## Marca
 
-Logotipo tipográfico `CHI—RO` (estética *white industrial*), icono y recursos en [`marca/`](marca/). Guía de marca completa: https://claude.ai/artifact/V2rWgxXXhJef5VdWbXjq3w
+Logo de Aleph (el símbolo ℵ y el nombre, en vectores), icono y recursos en [`marca/`](marca/).
 
 ## Desarrollo
 
@@ -137,4 +137,4 @@ Cada fila guarda la fecha de cambio y una marca de borrado, ya preparada para la
 - **Imágenes de Historia:** pinturas, grabados, manuscritos y fotografías antiguas de dominio público (Caravaggio, Giotto, Tiziano, Tissot, Doré, el Códice Mediceo de Tácito, P52, P46, el Sinaítico, el rollo de Isaías, American Colony, Bonfils…) y fotos con licencia Creative Commons de algunos objetos, todas de Wikimedia Commons. Cada imagen muestra su crédito en la app; la lista completa está en `public/historia/LICENCIAS.txt`.
 - **Grabados:** Gustave Doré, *La Grande Bible de Tours* (1866), dominio público, vía [Project Gutenberg](https://www.gutenberg.org/ebooks/8710) («The Doré Bible Gallery»). Se obtienen con el flujo «Traer grabados» y `herramientas/preparar_grabados.py`.
 - **Fuentes tipográficas:** Inter Tight, DM Sans, Literata, Atkinson Hyperlegible Next y Noto Serif Hebrew (interfaz y lectura); Archivo, Fraunces y Pinyon Script (solo en las láminas). Todas con licencia SIL Open Font License.
-- **Estética:** white industrial editorial; nombre y logotipo tipográfico propios (`CHI—RO`, en Inter Tight). Ver `marca/LEEME.md`.
+- **Estética:** white industrial editorial; nombre y logo propios (Aleph). Ver `marca/LEEME.md`.

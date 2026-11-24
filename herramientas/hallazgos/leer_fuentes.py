@@ -42,7 +42,7 @@ CLAVES = {
         "phoenicia", "tyre", "sidon", "damascus", "corinth", "ephesus", "rome"],
 }
 NS = {"atom": "http://www.w3.org/2005/Atom"}
-UA = {"User-Agent": "Mozilla/5.0 (aleph-hallazgos; https://github.com/XristosKidonis/chi-ro-heirs)"}
+UA = {"User-Agent": "Mozilla/5.0 (aleph-hallazgos; https://github.com/XristosKidonis/aleph)"}
 
 
 def limpio(texto):
