@@ -12,7 +12,7 @@ import time
 import urllib.parse
 import urllib.request
 
-UA = {'User-Agent': 'chi-ro-heirs/1.0 (https://github.com/XristosKidonis/chi-ro-heirs)'}
+UA = {'User-Agent': 'aleph/1.0 (https://github.com/XristosKidonis/aleph)'}
 API = 'https://commons.wikimedia.org/w/api.php?'
 salida = pathlib.Path('fuente-historia')
 salida.mkdir(exist_ok=True)

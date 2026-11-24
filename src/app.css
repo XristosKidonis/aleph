@@ -1094,6 +1094,8 @@ button.tl-item:hover .tl-que { text-decoration: underline; text-underline-offset
 @keyframes aviso-entra { from { opacity: 0; translate: 0 4px; } }
 .aviso { animation: aviso-entra 0.18s ease-out; }
 .velo { position: fixed; inset: 0; background: rgba(21, 21, 21, 0.35); z-index: 24; }
+/* con el selector de libros y capítulos abierto, la barra del versículo elegido se aparta: si no, tapa los números */
+.app:has(.nav.abierta) .acciones { visibility: hidden; }
 
 /* láminas: el editor de siempre */
 .estudio-lamina { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(250px, 1fr); gap: 22px; align-items: start; }
@@ -1199,6 +1201,13 @@ button.tl-item:hover .tl-que { text-decoration: underline; text-underline-offset
   .inicio-cultura { bottom: 105px; right: 22px; gap: 0; }
   .inicio-cultura-lamina { width: 47px; height: 58px; }
   .inicio-firma { left: 21px; right: 21px; bottom: 30px; font-size: 8px; }
+  /* en el teléfono el texto del Inicio llega casi al pie: la lámina del día va en el flujo, debajo y a la derecha,
+     en vez de flotar encima del saludo. Los márgenes automáticos centran el conjunto sin cortarlo si no entra. */
+  .inicio { flex-direction: column; justify-content: flex-start; }
+  .inicio-centro { margin-block: auto 0; }
+  .inicio-cultura { position: static; align-self: flex-end; margin: 22px 0 auto; }
+  /* botones de la cabecera con un área de toque cómoda para el dedo (el icono no cambia) */
+  .cab-accion { min-width: 40px; min-height: 40px; justify-content: center; }
   .titular { padding: 42px 21px 21px; display: block; }
   .titular h1 { margin: 17px 0 16px; }
   .titular p { text-align: left; font-size: 12px; color: var(--tenue); }
@@ -1236,6 +1245,9 @@ button.tl-item:hover .tl-que { text-decoration: underline; text-underline-offset
   .lb-estudio[aria-pressed="true"] { text-decoration: underline; text-underline-offset: 5px; }
   .lb-capitulo { font-size: 15px; }
   .lb-control { padding: 9px 4px; font-size: 9px; }
+  /* área de toque cómoda en la barra del lector (inline-block en el capítulo: flex juntaba «SALMOS01») */
+  .lb-control { min-height: 40px; min-width: 30px; justify-content: center; }
+  .lb-capitulo { display: inline-block; padding-block: 10px; }
   .lb-versiones { margin-right: 0; }
   /* en el celular los menús se abren a lo ancho */
   .lb-menu { right: 12px; left: 12px; width: auto; }

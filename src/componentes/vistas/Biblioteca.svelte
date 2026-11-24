@@ -110,7 +110,7 @@
           <span class="cub-caps" aria-hidden="true">{l.capitulos}</span>
           <span class="cub-tipo">{l.testamento === 'AT' ? t('nav.at') : t('nav.nt')} · {t('bib.capitulos', { n: l.capitulos })}</span>
           {#if FIRMA.has(l.n)}
-            <span class="cub-monograma" aria-hidden="true">CR / {String(l.n).padStart(2, '0')}</span>
+            <span class="cub-monograma" aria-hidden="true">ALEPH / {String(l.n).padStart(2, '0')}</span>
             <span class="cub-familia" aria-hidden="true">{t(`fam.${familia(l.n)}`)}</span>
           {/if}
         </button>

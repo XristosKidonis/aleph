@@ -3,7 +3,7 @@
 // Si no hay internet, se queda con lo último que tenía. Nunca ejecuta nada remoto: solo lee datos y los valida.
 import { depurar } from './hallazgosEsquema.js';
 
-const REMOTO = 'https://raw.githubusercontent.com/XristosKidonis/chi-ro-heirs/refs/heads/contenido/historia/hallazgos.json';
+const REMOTO = 'https://raw.githubusercontent.com/XristosKidonis/aleph/refs/heads/contenido/historia/hallazgos.json';
 const LOCAL = `${import.meta.env.BASE_URL}historia/hallazgos.json`;
 const GUARDADO = 'aleph.hallazgos';
 const VISTOS = 'aleph.hallazgos.vistos';
