@@ -10,12 +10,14 @@
   import { abrirEnNavegador } from '../../lib/archivos.js';
   import { t, idioma } from '../../lib/i18n.svelte.js';
 
-  let { p, abierta = false, alternar } = $props();
-  const imgs = $derived(imagenesDe(p.id));
+  // Los hallazgos (llegan sin actualizar la app) traen su número, su imagen opcional y no miden distancia
+  let { p, abierta = false, alternar, nuevo = false } = $props();
+  const esHallazgo = $derived(p.figura === 'hallazgo');
+  const imgs = $derived(esHallazgo ? (p.imagen ? [{ nombre: p.id, ...p.imagen }] : []) : imagenesDe(p.id));
   const L = (x) => x?.[idioma()] ?? '';
-  const d = $derived(distancia(p));
+  const d = $derived(esHallazgo ? 0 : distancia(p));
   const cuando = $derived(
-    p.figura === 'juan' && p.id === 'reliquias' ? ''
+    esHallazgo || (p.figura === 'juan' && p.id === 'reliquias') ? ''
       : Math.abs(d) <= 6 ? t('his.mismaEpoca')
       : d > 0 ? t('his.despues', { n: d }) : t('his.antes', { n: -d }),
   );
@@ -28,8 +30,8 @@
 
 <li class="his-prueba" class:abierta class:sin-imagen={!imgs.length} id="prueba-{p.id}">
   <button class="his-fila" aria-expanded={abierta} onclick={alternar}>
-    <span class="his-mini" aria-hidden="true">{#if imgs.length}<img src={imgs[0].src} alt="" loading="lazy" decoding="async" />{:else}<span>{numero(p)}</span>{/if}</span>
-    <span class="his-num">{t('his.prueba')} {numero(p)}</span>
+    <span class="his-mini" aria-hidden="true">{#if imgs.length}<img src={imgs[0].src} alt="" loading="lazy" decoding="async" />{:else}<span>{p.num ?? numero(p)}</span>{/if}</span>
+    <span class="his-num">{t(esHallazgo ? 'his.hallazgo' : 'his.prueba')} {p.num ?? numero(p)}{#if nuevo} <em class="his-nuevo">{t('his.nuevo')}</em>{/if}</span>
     <span class="his-titulo">{L(p.titulo)}</span>
     <span class="his-meta">{L(p.autor)} · {L(p.fecha)}</span>
     <Sello grado={p.grado} />
@@ -68,6 +70,7 @@
           <button class="his-ref" onclick={() => leer(r)}>{nombreRef(x.libro, x.cap, x.v, x.hasta)} ↗</button>
         {/each}
         {#if p.fuente}<button class="his-ref his-fuente" onclick={() => abrirEnNavegador(p.fuente)}>{t('his.fuente')} ↗</button>{/if}
+        {#if p.noticia}<button class="his-ref his-fuente" onclick={() => abrirEnNavegador(p.noticia)}>{t('his.noticia')} ↗</button>{/if}
       </div>
     </div>
   {/if}

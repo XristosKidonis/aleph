@@ -7,6 +7,7 @@
   import { t } from '../lib/i18n.svelte.js';
   import { esTauri } from '../lib/bd.js';
   import { abreCandado, carpetaDatos, ARCHIVO_OLVIDO } from '../lib/candado.js';
+  import { sonar } from '../lib/sonidos.js';
 
   let clave = $state('');
   let mal = $state(false);
@@ -24,6 +25,7 @@
     mal = false;
     const abre = await abreCandado(usuario.ajustes.candado, clave);
     if (abre) {
+      sonar('unlock');
       clave = '';
       ui.llegada = true;
       ui.puerta = null;
@@ -33,6 +35,7 @@
     await new Promise((r) => setTimeout(r, 450));
     probando = false;
     mal = true;
+    sonar('error');
     clave = '';
     campo?.focus();
   }

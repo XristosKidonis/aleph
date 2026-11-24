@@ -162,6 +162,38 @@ img { display: block; max-width: 100%; }
 /* saludo con tu nombre sobre «Última lectura»; y el fundido al llegar desde la bienvenida o el candado */
 .inicio-saludo { display: block; margin-bottom: 10px; font: 300 22px/1.2 var(--f-display); letter-spacing: -0.025em; color: var(--tinta); }
 .inicio.llega { animation: inicio-llega 0.7s ease-out; }
+/* transición «Cristal» entre pantallas (ui.svelte.js: conTransicion): adentro avanza, afuera retrocede, entre salas
+   del mismo nivel solo desenfoque. La cabecera es el marco: no se mueve */
+.cabecera { view-transition-name: cabecera; }
+/* si la pantalla nueva no tiene cabecera (el Inicio) se va enseguida; si recién aparece, llega suave al final */
+::view-transition-old(cabecera):only-child { animation: 0.16s ease-out both cabecera-se-va; }
+::view-transition-new(cabecera):only-child { animation: 0.3s 0.18s ease-out both cabecera-llega; }
+@keyframes cabecera-se-va { to { opacity: 0; } }
+@keyframes cabecera-llega { from { opacity: 0; } }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: 0.44s; animation-timing-function: cubic-bezier(.2, .8, .2, 1); }
+::view-transition-new(root) { animation-delay: 0.06s; animation-fill-mode: backwards; }
+:root[data-transicion="adentro"]::view-transition-old(root) { animation-name: cristal-se-hunde; }
+:root[data-transicion="adentro"]::view-transition-new(root) { animation-name: cristal-llega-de-cerca; }
+:root[data-transicion="afuera"]::view-transition-old(root) { animation-name: cristal-se-acerca; }
+:root[data-transicion="afuera"]::view-transition-new(root) { animation-name: cristal-sube-del-fondo; }
+:root[data-transicion="sala"]::view-transition-old(root) { animation-name: cristal-se-borra; animation-duration: 0.3s; }
+:root[data-transicion="sala"]::view-transition-new(root) { animation-name: cristal-aparece; animation-duration: 0.38s; }
+@keyframes cristal-se-borra { to { filter: blur(8px); opacity: 0; } }
+@keyframes cristal-aparece { from { filter: blur(8px); opacity: 0; } }
+@keyframes cristal-se-hunde { to { transform: scale(0.92); filter: blur(10px); opacity: 0; } }
+@keyframes cristal-llega-de-cerca { from { transform: scale(1.07); filter: blur(9px); opacity: 0; } }
+@keyframes cristal-se-acerca { to { transform: scale(1.07); filter: blur(10px); opacity: 0; } }
+@keyframes cristal-sube-del-fondo { from { transform: scale(0.93); filter: blur(9px); opacity: 0; } }
+/* parallax del Inicio (lib/parallax.js). La entrada bajo el mouse se acerca: crece desde su borde izquierdo (no se
+   mueve en Z, que con la perspectiva la corría fuera del mouse y parpadeaba) y las demás se aclaran */
+@media (min-width: 761px) and (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .inicio { perspective: 1400px; }
+  .inicio .inicio-entrada { transform-origin: left center; transition: color 0.18s, transform 0.45s cubic-bezier(.2, .8, .2, 1), opacity 0.35s ease; }
+  .inicio .inicio-entradas.con-cerca .inicio-entrada:not(.cerca) { opacity: 0.45; }
+  .inicio .inicio-entradas.con-cerca .inicio-entrada.cerca { opacity: 1; color: var(--tinta); transform: translateX(6px) scale(1.07); }
+  /* en Imprenta cada entrada es un renglón con bordes: crece menos para no salirse de la lista */
+  :root[data-skin="imprenta"] .inicio .inicio-entradas.con-cerca .inicio-entrada.cerca { transform: scale(1.025); }
+}
 @keyframes inicio-llega { from { opacity: 0; } }
 
 /* Puerta: bienvenida (la primera vez, siempre en Blanco) y candado (en el aspecto elegido) */
@@ -292,15 +324,30 @@ img { display: block; max-width: 100%; }
 .archivo-vacio p { color: var(--tinta-2); max-width: 430px; line-height: 1.7; }
 .archivo-vacio button { text-decoration: underline; text-underline-offset: 6px; font-size: 13px; padding: 15px; }
 
-/* láminas: índice neutro de colecciones y, adentro, las piezas */
-.colecciones { padding: clamp(20px, 3vw, 40px) var(--margen) 20px; }
-.coleccion { width: 100%; display: grid; grid-template-columns: 48px minmax(210px, 1.1fr) minmax(150px, 0.9fr) 90px 35px; gap: 18px; align-items: center; text-align: left;
-  border-top: 1px solid var(--linea); padding: clamp(22px, 3.4vw, 42px) 6px; transition: background 0.18s; }
+/* láminas: índice de colecciones con una vitrina al lado (una sola lámina a la vez) y, adentro, las piezas */
+.lam-indice { display: grid; grid-template-columns: minmax(0, 1fr) clamp(260px, 27vw, 400px); gap: clamp(32px, 4.5vw, 72px); align-items: start;
+  padding: clamp(20px, 3vw, 40px) var(--margen) 20px; }
+.coleccion { width: 100%; display: grid; grid-template-columns: 48px minmax(0, 1fr) 90px 35px; column-gap: 18px; row-gap: 8px; align-items: center; text-align: left;
+  border-top: 1px solid var(--linea); padding: clamp(22px, 3vw, 38px) 6px; transition: background 0.18s, opacity 0.35s; }
+/* cada parte en su celda (si solo se fija la fila, la grilla las coloca primero y desordena): el nombre con la
+   lista de piezas debajo; en el celular las reubica el bloque de 760 px */
+.col-num { grid-area: 1 / 1; } .col-nombre { grid-area: 1 / 2; } .col-sub { grid-area: 2 / 2; } .col-cuenta { grid-area: 1 / 3; } .col-flecha { grid-area: 1 / 4; }
+.colecciones.con-foco .coleccion:not(.foco) { opacity: 0.38; }
+.vitrina { position: sticky; top: calc(var(--alto-cabecera, 72px) + 24px); margin: 0; perspective: 1200px; }
+.vitrina-marco { position: relative; display: block; width: 100%; aspect-ratio: 0.8; background: var(--superficie); box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.35);
+  transition: transform 0.2s ease-out; }
+.vitrina-marco img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.7s ease; }
+.vitrina-marco img.ver { opacity: 1; }
+.vitrina-pie { display: flex; justify-content: space-between; gap: 8px; margin-top: 14px; font: 500 12px var(--f-ui); text-transform: uppercase; }
+.vitrina-pie span:last-child { font-size: 10px; font-weight: 400; color: var(--tenue); }
+.vitrina-pasos { display: flex; gap: 6px; height: 1px; margin-top: 10px; }
+.vitrina-pasos i { width: 18px; background: var(--linea); transition: background 0.3s; }
+.vitrina-pasos i.ya { background: var(--tinta); }
 .coleccion:last-child { border-bottom: 1px solid var(--linea); }
 .coleccion:hover { background: #f0f0ee; }
 .col-num, .col-sub, .col-cuenta { font: 500 11px/1.4 var(--f-ui); color: #696966; letter-spacing: 0.015em; }
 .col-cuenta { text-align: right; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; }
-.col-nombre { font: 400 clamp(42px, 6.5vw, 94px)/0.98 var(--f-display); letter-spacing: -0.075em; transition: transform 0.2s; }
+.col-nombre { font: 400 clamp(42px, 5.4vw, 86px)/0.98 var(--f-display); letter-spacing: -0.075em; transition: transform 0.2s; }
 .coleccion:hover .col-nombre { transform: translateX(5px); }
 .col-flecha { font: 400 26px var(--f-ui); text-align: right; color: #90908c; transition: transform 0.2s; }
 .coleccion:hover .col-flecha { transform: translate(3px, -3px); color: var(--tinta); }
@@ -425,6 +472,11 @@ button.lb-menu-fila:hover { color: var(--tinta); }
 .texto .subtitulo { display: block; margin: 1.8em 0 0.8em; font: 600 10px var(--f-ui); letter-spacing: 0.15em; text-transform: uppercase; color: var(--tenue); }
 .texto .subtitulo:first-child { margin-top: 0; }
 .texto .v.sel { background: var(--seleccion); outline: 1px solid #c4c4bf; outline-offset: 3px; }
+/* el versículo elegido se levanta apenas del papel y el resto del capítulo se aclara: foco en lo que tocaste.
+   Levantarse solo en versículos en bloque (en modo párrafo son trozos de renglón y solo se aclara el resto) */
+.texto .v { transition: background 0.15s, opacity 0.3s ease, transform 0.32s cubic-bezier(.2, .8, .2, 1), box-shadow 0.32s ease; }
+.texto:has(.v.sel) .v:not(.sel) { opacity: 0.55; }
+.texto.modo-verso .v.sel, .texto.paralelo .fila > .v.sel { transform: translateY(-3px); box-shadow: 0 16px 30px -20px rgba(0, 0, 0, 0.38); }
 .texto .v.leyendo { background: var(--acento-suave); }
 .texto .v.destello { animation: destello 1.8s ease-out; }
 @keyframes destello { 0%, 35% { background: var(--superficie-2); } 100% { background: transparent; } }
@@ -454,6 +506,10 @@ button.lb-menu-fila:hover { color: var(--tinta); }
 .amen-palabra { font: 400 40px/1 var(--f-display); letter-spacing: -0.06em; color: var(--decorado); transition: color 0.2s; }
 .amen-estado { font: 500 10px var(--f-ui); letter-spacing: 0.1em; text-transform: uppercase; color: var(--tenue); }
 .sello:hover .amen-palabra, .amen.hecho .amen-palabra { color: var(--tinta); }
+/* al marcar el capítulo, «Amén» se asienta con un golpe mínimo (una sola vez). El dueño rechazó la fecha en
+   recuadro tipo estampilla (2026-11-23): se veía barata */
+.amen-palabra.asienta { display: inline-block; animation: amen-asienta 0.45s cubic-bezier(.3, 1.4, .5, 1); }
+@keyframes amen-asienta { 0% { transform: scale(1.12); } 60% { transform: scale(0.97); } 100% { transform: scale(1); } }
 .cap-nav { display: flex; justify-content: space-between; gap: 16px; margin-top: 50px; width: 100%; }
 .nav-cap { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; min-width: 0; text-align: left; color: var(--tinta-2); }
 .nav-cap.siguiente { align-items: flex-end; text-align: right; }
@@ -692,6 +748,9 @@ textarea.campo { min-height: 110px; resize: vertical; font: 400 16px/1.6 var(--f
 .his-mini span { font: 400 44px/1 var(--f-display); letter-spacing: -0.06em; color: var(--decorado); }
 .his-fila:hover .his-mini img { transform: scale(1.05); filter: none; }
 .his-num { grid-area: num; align-self: end; font: 600 9.5px var(--f-ui); letter-spacing: 0.14em; text-transform: uppercase; color: var(--tenue); }
+.his-nuevo { margin-left: 8px; font-style: normal; color: var(--tinta); }
+.his-punto { display: inline-block; width: 6px; height: 6px; margin-left: 6px; border-radius: 50%; background: var(--tinta); vertical-align: 2px; }
+.his-vacio { margin: 26px var(--margen); }
 .his-titulo { grid-area: titulo; font: 400 clamp(20px, 2.1vw, 28px)/1.15 var(--f-display); letter-spacing: -0.04em; color: var(--tinta); transition: transform 0.2s ease; }
 .his-meta { grid-area: meta; align-self: start; font: 400 12.5px/1.45 var(--f-ui); color: var(--tenue); }
 .his-meta b { font-weight: 600; color: var(--tinta-2); }
@@ -1028,6 +1087,22 @@ button.tl-item:hover .tl-que { text-decoration: underline; text-underline-offset
 .lam-grande .etiqueta-ui { margin-top: 0; }
 .lam-grande input { width: 100%; font: 500 14px var(--f-ui); text-transform: uppercase; letter-spacing: 0.02em; }
 .lam-trozos button { text-transform: none; letter-spacing: 0; font: 400 13px var(--f-texto); padding: 6px 9px; text-align: left; }
+.lam-personal { display: grid; gap: 8px; padding: 14px 0 6px; border-top: 1px solid var(--tinta); margin-top: 6px; }
+.lam-personal-cabeza { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.lam-personal-titulo { font: 400 24px/1 var(--f-display); letter-spacing: -0.04em; }
+.lam-restablecer { font: 400 12px var(--f-ui); color: var(--tinta-2); text-decoration: underline; text-underline-offset: 4px; padding: 6px 0; }
+.lam-restablecer:disabled { opacity: 0.35; text-decoration: none; cursor: default; }
+.lamina-controles .lam-campo { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+.lam-campo em { margin-left: auto; font-style: normal; text-transform: none; letter-spacing: 0.02em; color: var(--tenue); }
+/* punto: este control ya no es el de fábrica */
+.lam-campo.cambiado::after { content: ''; order: 2; width: 5px; height: 5px; border-radius: 50%; background: var(--acento); }
+.lam-campo.cambiado:not(:has(em))::after { margin-left: auto; }
+.lam-muestras { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding-top: 2px; }
+.lam-muestras button { width: 24px; height: 24px; padding: 0; border: 1px solid var(--linea); }
+.lam-muestras button[aria-pressed="true"] { outline: 1px solid var(--tinta); outline-offset: 2px; }
+.lam-otro { position: relative; display: grid; place-items: center; width: 24px; height: 24px; border: 1px dashed var(--tenue); font-size: 13px; color: var(--tinta-2); cursor: pointer; }
+.lam-otro input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.lam-personal input[type="range"] { width: 100%; accent-color: var(--tinta); }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chips button { padding: 8px 11px; border: 1px solid var(--linea); font: 500 10px var(--f-ui); letter-spacing: 0.06em; text-transform: uppercase; color: var(--tinta-2); }
 .chips button:hover { color: var(--tinta); border-color: var(--tinta-2); }
@@ -1069,6 +1144,9 @@ button.tl-item:hover .tl-que { text-decoration: underline; text-underline-offset
 }
 @media (max-width: 1100px) { .inicio-cultura { right: 24px; bottom: 83px; } .inicio-cultura > div { display: none; } }
 @media (max-width: 900px) {
+  /* láminas: la vitrina sube arriba de las colecciones (las filas ya no caben al lado) */
+  .lam-indice { grid-template-columns: minmax(0, 1fr); gap: 26px; }
+  .vitrina { position: static; order: -1; width: min(280px, 72%); }
   .marco.con-estudio { grid-template-columns: minmax(0, 1fr); }
   .estudio { position: fixed; z-index: 35; left: 0; right: 0; bottom: 0; height: 74%; border-top: 1px solid var(--linea); box-shadow: var(--sombra); }
   /* con la hoja del Estudio abierta, la barra de selección se apoya encima de la hoja, no sobre su contenido */
@@ -1119,7 +1197,7 @@ button.tl-item:hover .tl-que { text-decoration: underline; text-underline-offset
   .archivo { grid-template-columns: 1fr; padding: 10px 21px 0; }
   .archivo-entrada { min-height: 175px; padding: 20px 2px 25px; }
   .arc-nota { font-size: 27px; }
-  .colecciones { padding: 20px; }
+  .lam-indice { padding: 20px; }
   .coleccion { grid-template-columns: 25px minmax(0, 1fr) 25px; gap: 10px; padding: 28px 1px; }
   .col-num { align-self: start; padding-top: 7px; font-size: 9px; }
   .col-nombre { font-size: clamp(38px, 9vw, 60px); }
@@ -1170,6 +1248,8 @@ button.tl-item:hover .tl-que { text-decoration: underline; text-underline-offset
 @media (max-width: 340px) {
   .lb-icono { padding-left: 3px; padding-right: 3px; }
 }
+/* ajuste Movimiento en «quieto»: nada se anima, como con «reducir movimiento» del sistema */
+:root[data-movimiento="quieto"] *, :root[data-movimiento="quieto"] *::before, :root[data-movimiento="quieto"] *::after { animation: none !important; transition: none !important; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation: none !important; transition: none !important; }

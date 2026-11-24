@@ -1,4 +1,5 @@
 // Estado de la interfaz (no se guarda): selección, panel abierto, capítulo cargado, avisos.
+import { flushSync } from 'svelte';
 import { usuario, irA as guardarPosicion } from './usuario.svelte.js';
 import { capitulo as cargarCapitulo, info } from './biblia.js';
 import { clave, nombreRef, nombreLibro, LIBROS } from './libros.js';
@@ -57,7 +58,30 @@ function estudioAlEntrar(antes) {
   if (antes !== 'lector' && usuario.ajustes.estudioAlAbrir && typeof window !== 'undefined' && window.innerWidth > 900) ui.estudioAbierto = true;
 }
 
+// Transición «Cristal» entre pantallas (elegida por el dueño, 2026-11-23): la pantalla que dejas se hunde y se
+// desenfoca, y la nueva llega desde cerca. Cada movimiento significa algo: la app tiene tres niveles (Inicio, las
+// salas —Biblioteca, Mi archivo, Láminas, Historia— y el texto). Bajar de nivel avanza («entrar»), subir
+// retrocede («salir») y cambiar de sala en el mismo nivel es un desenfoque quieto, sin profundidad. Usa la View
+// Transitions API (los estilos están en app.css); sin ella, o con «reducir movimiento», el cambio es instantáneo.
+const PROFUNDIDAD = { inicio: 0, biblioteca: 1, archivo: 1, laminas: 1, historia: 1, lector: 2 };
+const TIPO = { 1: 'adentro', '-1': 'afuera', 0: 'sala' };
+function conTransicion(destino, cambio) {
+  const desde = ui.vista;
+  const movimiento = typeof document !== 'undefined' ? document.documentElement.dataset.movimiento : 'quieto';
+  const sinEfecto = destino === desde || ui.puerta || movimiento === 'quieto' || !document.startViewTransition
+    || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  if (sinEfecto) return cambio();
+  const raiz = document.documentElement;
+  // en «sereno» todo cambio es un desenfoque quieto, sin profundidad
+  raiz.dataset.transicion = movimiento === 'sereno' ? 'sala' : TIPO[Math.sign(PROFUNDIDAD[destino] - PROFUNDIDAD[desde])];
+  const t = document.startViewTransition(() => flushSync(cambio));
+  t.finished.finally(() => { delete raiz.dataset.transicion; });
+}
+
 export function abrirVista(v) {
+  conTransicion(v, () => cambiarVista(v));
+}
+function cambiarVista(v) {
   const antes = ui.vista;
   ui.menuBarra = null;
   if (v === 'laminas') ui.coleccion = null;
@@ -68,6 +92,9 @@ export function abrirVista(v) {
 }
 
 export function irA(libro, cap, v = null) {
+  conTransicion('lector', () => irAhora(libro, cap, v));
+}
+function irAhora(libro, cap, v) {
   const desdeBiblioteca = ui.vista === 'biblioteca';
   estudioAlEntrar(ui.vista);
   ui.vista = 'lector';

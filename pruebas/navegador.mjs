@@ -51,6 +51,9 @@ const pag = await ctx.newPage();
 pag.on('pageerror', (e) => errores.push('pageerror: ' + e.message));
 pag.on('console', (m) => { if (m.type() === 'error') errores.push('console: ' + m.text()); });
 let pedidosNLT = 0;
+// sonidos Zen que pidió la app (lib/sonidos.js): señal → estado HTTP
+const sonidos = new Map();
+pag.on('response', (r) => { const m = r.url().match(/sonidos\/zen\/([a-z]+)\.mp3$/); if (m) sonidos.set(m[1], r.status()); });
 await pag.route('https://api.nlt.to/**', (route) => {
   pedidosNLT++;
   const u = new URL(route.request().url());
@@ -368,6 +371,25 @@ await paso('lámina en los ocho acabados', async () => {
     await pag.waitForTimeout(600);
     await pag.waitForSelector('.lamina-vista:not(.cargando)', { timeout: 10000 });
   }
+  // Aerosol deja elegir la letra: «A mano» de entrada, y «De molde»
+  await pag.click('.chips button:has-text("Aerosol")');
+  await pag.waitForSelector('.chips button[aria-pressed="true"]:has-text("A mano")');
+  await pag.click('.chips button:has-text("De molde")');
+  await pag.waitForSelector('.chips button[aria-pressed="true"]:has-text("De molde")');
+  await pag.waitForTimeout(600);
+  await pag.waitForSelector('.lamina-vista:not(.cargando)', { timeout: 10000 });
+  // Personalizar: un fondo nuevo pinta la lámina, marca el control y «Restablecer» vuelve a fábrica
+  await pag.click('.chips button:has-text("Ultramar")');
+  if (!(await pag.isDisabled('.lam-restablecer'))) throw new Error('Restablecer activo sin cambios');
+  await pag.click('.lam-muestras >> nth=0 >> button[aria-label="#fdd0e0"]');
+  await pag.waitForSelector('.lam-campo.cambiado');
+  await pag.waitForTimeout(600);
+  await pag.waitForSelector('.lamina-vista:not(.cargando)', { timeout: 10000 });
+  const [r, g] = await pag.evaluate(() => [...document.querySelector('.estudio-lamina canvas').getContext('2d').getImageData(8, 8, 1, 1).data]);
+  if (r < 235 || g < 190 || g > 225) throw new Error(`el fondo no cambió a rosa (${r}, ${g})`);
+  await pag.click('.lam-restablecer');
+  await pag.waitForSelector('.lam-campo.cambiado', { state: 'detached' });
+  await pag.click('.chips button:has-text("Grabado")');
   // versículo largo en Grabado: se ve qué trozo va en grande y se puede elegir otro
   const trozos = await pag.locator('.lam-trozos button').count();
   if (trozos < 2) throw new Error('sin trozos para elegir');
@@ -549,15 +571,25 @@ await paso('Historia: expediente, ¿facto o fake?, línea del tiempo y lado a la
   await pag.waitForSelector('dialog.visor[open]', { state: 'detached' });
   await pag.click('.filtro:has-text("Juan el Bautista")');
   if ((await pag.locator('.his-prueba').count()) !== 7) throw new Error('faltan pruebas de Juan');
-  // ¿Facto o fake?: una ronda completa
+  // Hallazgos: las fichas que llegan sin actualizar la app (aquí, la copia que trae la app)
+  await pag.click('.filtro:has-text("Hallazgos")');
+  await pag.waitForSelector('#prueba-tel-dan');
+  const hallazgos = await pag.locator('.his-prueba').count();
+  if (hallazgos < 3 || !(await pag.locator('.his-nuevo').count())) throw new Error(`hallazgos: ${hallazgos}`);
+  await pag.click('#prueba-tel-dan .his-fila');
+  if (!/casa de David/.test(await pag.textContent('#prueba-tel-dan .his-cita'))) throw new Error('ficha de Tel Dan');
+  if (await pag.locator('#prueba-tel-dan .his-nuevo').count()) throw new Error('el hallazgo abierto sigue como nuevo');
+  // ¿Facto o fake?: una ronda completa (14 fijas + las de los hallazgos)
   await pag.click('.filtro:has-text("¿Facto o fake?")');
-  for (let i = 0; i < 14; i++) {
+  const total = Number((await pag.textContent('.quiz-cabeza')).match(/\/\s*(\d+)/)[1]);
+  if (total < 14 + hallazgos) throw new Error(`el quiz no suma las preguntas de los hallazgos: ${total}`);
+  for (let i = 0; i < total; i++) {
     await pag.click('.quiz-op >> nth=0');
     await pag.waitForSelector('.quiz-veredicto');
     await pag.click('.quiz-acciones .boton:not(.secundario)');
   }
   const marcador = await pag.textContent('.quiz-marcador');
-  if (!/\/14/.test(marcador)) throw new Error('marcador: ' + marcador);
+  if (!marcador.includes(`/${total}`)) throw new Error('marcador: ' + marcador);
   await pag.click('.filtro:has-text("Línea del tiempo")');
   if ((await pag.locator('.tl-lista li').count()) < 12) throw new Error('línea del tiempo corta');
   // de una prueba al pasaje
@@ -587,11 +619,17 @@ await paso('Historia: expediente, ¿facto o fake?, línea del tiempo y lado a la
   await pag.waitForFunction(() => /^Juan\s*3/.test(document.querySelector('.cap-titulo')?.textContent || ''));
 });
 
-await paso('Láminas: índice neutro → Color → volver al índice', async () => {
+await paso('Láminas: índice con vitrina → Color → volver al índice', async () => {
   await pag.click('.cab-link:has-text("Láminas")');
   await pag.waitForSelector('.coleccion');
   if ((await pag.locator('.coleccion').count()) !== 3) throw new Error('no hay tres colecciones');
-  if (await pag.locator('.obra, .pagina-vista img, .pagina-vista canvas').count()) throw new Error('hay arte antes de entrar');
+  if (await pag.locator('.obra').count()) throw new Error('hay piezas sueltas antes de entrar');
+  // la vitrina: una sola lámina a la vista; con el mouse sobre Color pasa a una pieza de Color
+  await pag.waitForSelector('.vitrina img.ver', { timeout: 30000 });
+  if ((await pag.locator('.vitrina img.ver').count()) !== 1) throw new Error('la vitrina no muestra una sola lámina');
+  await pag.hover('.coleccion:has-text("Color")');
+  await pag.waitForFunction(() => ['ultramar', 'riso-amarillo', 'riso-verde', 'calor'].includes(document.querySelector('.vitrina img.ver')?.dataset.id), null, { timeout: 30000 });
+  await pag.screenshot({ path: `${OUT}/13e-laminas-vitrina.png` });
   await pag.click('.coleccion:has-text("Color")');
   await pag.waitForFunction(() => document.querySelectorAll('.obra img').length === 4, null, { timeout: 30000 });
   await pag.screenshot({ path: `${OUT}/14-laminas-color.png` });
@@ -888,6 +926,12 @@ await paso('seteo: cinco preguntas personalizan Inicio, versión, letra, tema y 
 });
 await ctxSeteo.close();
 
+await paso('sonidos zen: se cargan al tocar, abrir, cerrar, subrayar y guardar', async () => {
+  const faltan = ['press', 'open', 'close', 'select', 'check', 'success'].filter((x) => sonidos.get(x) !== 200);
+  const malos = [...sonidos].filter(([, st]) => st !== 200);
+  if (faltan.length || malos.length) throw new Error('faltan: ' + faltan.join(',') + ' · con error: ' + malos.join(';'));
+  console.log('     señales oídas:', [...sonidos.keys()].join(', '));
+});
 console.log('pedidos a la API NTV/NLT simulada:', pedidosNLT);
 console.log(errores.length ? 'ERRORES:\n' + errores.join('\n') : 'Sin errores de consola.');
 await navegador.close();

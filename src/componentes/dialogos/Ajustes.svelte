@@ -94,6 +94,18 @@
   <input id="aj-historia" type="checkbox" checked={a.historia !== false} onchange={(e) => ajustar('historia', e.currentTarget.checked)} />
 </div>
 <div class="ajuste">
+  <label for="aj-sonidos">{t('aj.sonidos')} <small>{t('aj.sonidosAyuda')}</small></label>
+  <input id="aj-sonidos" type="checkbox" checked={a.sonidos !== false} onchange={(e) => ajustar('sonidos', e.currentTarget.checked)} />
+</div>
+<div class="ajuste">
+  <label for="aj-movimiento">{t('aj.movimiento')} <small>{t('aj.movimientoAyuda')}</small></label>
+  <select id="aj-movimiento" value={a.movimiento || 'inmersivo'} onchange={(e) => ajustar('movimiento', e.currentTarget.value)}>
+    <option value="inmersivo">{t('aj.movInmersivo')}</option>
+    <option value="sereno">{t('aj.movSereno')}</option>
+    <option value="quieto">{t('aj.movQuieto')}</option>
+  </select>
+</div>
+<div class="ajuste">
   <label for="aj-portadas">{t('aj.portadas')} <small>{t('aj.portadasAyuda')}</small></label>
   <input id="aj-portadas" type="checkbox" checked={a.portadas !== false} onchange={(e) => ajustar('portadas', e.currentTarget.checked)} />
 </div>

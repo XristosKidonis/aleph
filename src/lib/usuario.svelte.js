@@ -10,6 +10,8 @@ export const AJUSTES_INICIALES = {
   bienvenido: false,      // ya pasó por la bienvenida de la primera vez
   candado: null,          // contraseña al abrir: { sal, hash, vueltas } (ver candado.js); nunca la contraseña
   ordenInicio: null,      // orden de las entradas del Inicio (lo fija el seteo: Historia o Láminas suben); null = el de siempre
+  sonidos: true,
+  movimiento: 'inmersivo', // inmersivo (parallax y transiciones con profundidad) | sereno (solo desenfoques suaves) | quieto          // sonidos Zen en momentos puntuales (lib/sonidos.js)
   estudioAlAbrir: false,  // al entrar a leer, el estudio se abre junto al texto (para quien estudia; solo en pantallas anchas)
   mostrarInicio: true,    // pantalla de inicio al abrir
   grabados: false,        // grabado de Doré a toda página al abrir cada libro (opcional, en Ajustes)

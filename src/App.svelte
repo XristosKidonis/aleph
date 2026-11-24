@@ -29,6 +29,7 @@
   import { capituloSiguiente, fijarIdiomaLibros } from './lib/libros.js';
   import { t } from './lib/i18n.svelte.js';
   import { abrirEnNavegador } from './lib/archivos.js';
+  import { sonar } from './lib/sonidos.js';
   import { esTauri } from './lib/bd.js';
 
   let listo = $state(false);
@@ -78,6 +79,8 @@
     fijarIdiomaLibros(usuario.ajustes.idioma);
     return usuario.ajustes.idioma;
   });
+  // nivel de movimiento: lo leen parallax.js, las transiciones (ui.svelte.js) y app.css
+  $effect(() => { document.documentElement.dataset.movimiento = usuario.ajustes.movimiento || 'inmersivo'; });
   $effect(() => { document.documentElement.lang = idiomaUI === 'en' ? 'en' : 'es'; });
 
   // Tema y tipografía. Todo es claro; el modo oscuro es solo del lector (y sus paneles).
@@ -125,7 +128,25 @@
   }
 
   // En la app de escritorio los enlaces externos se abren en tu navegador
+  // Sonidos Zen (lib/sonidos.js). Un toque en las entradas del Inicio, la navegación y las puertas; el resto de
+  // los momentos (abrir, cerrar, pasar de capítulo) se oyen por los efectos de abajo o en su componente.
+  const CON_TOQUE = '.inicio-entrada, .cab-link, .cab-marca, .seteo-opcion, .puerta-entrar, .inicio-empezar button';
+  let abiertoAntes = false;
+  $effect(() => {
+    const abierto = !!(ui.dialogo || ui.buscadorAbierto || ui.menuBarra);
+    if (abierto !== abiertoAntes) sonar(abierto ? 'open' : 'close');
+    abiertoAntes = abierto;
+  });
+  let capAntes = '';
+  $effect(() => {
+    const p = usuario.ajustes.pos;
+    const k = listo && p ? `${p.libro}.${p.cap}` : '';
+    if (capAntes && k && k !== capAntes && ui.vista === 'lector') sonar('swipe');
+    capAntes = k;
+  });
+
   function clic(e) {
+    if (e.target.closest(CON_TOQUE)) sonar('press');
     const a = e.target.closest('a[target="_blank"]');
     if (a && esTauri) {
       e.preventDefault();

@@ -9,6 +9,7 @@
   import { dibujarLamina } from '../lib/laminas.js';
   import { dia, cargarVersoDelDia, laminaDelDia } from '../lib/versoDelDia.svelte.js';
   import { t } from '../lib/i18n.svelte.js';
+  import { parallax } from '../lib/parallax.js';
 
   const pos = $derived(usuario.ajustes.pos);
   // quien todavía no ha leído nada (ni se ha movido de Génesis 1) recibe una sugerencia: empezar por Juan
@@ -71,7 +72,7 @@
   {#if usuario.ajustes.nombre}<span class="inicio-saludo">{t('ini.hola', { n: usuario.ajustes.nombre })}</span>{/if}
 {/snippet}
 
-<section class="inicio" class:llega={ui.llegada} aria-label={t('vista.inicio')} onanimationend={() => (ui.llegada = false)}>
+<section class="inicio" use:parallax class:llega={ui.llegada} aria-label={t('vista.inicio')} onanimationend={() => (ui.llegada = false)}>
   <div class="inicio-centro">
     <div class="inicio-edicion" aria-hidden="true">{t('ini.edicion')}</div>
     <Marca grande />

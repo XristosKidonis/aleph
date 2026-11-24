@@ -4,6 +4,7 @@
   // estudiar, lámina); el resto queda a un toque en «Más», sin perder ninguna función.
   import Icono from './Icono.svelte';
   import { ui, abrirPestana, clavesSeleccion, etiquetaSeleccion, avisar, copiarTexto } from '../lib/ui.svelte.js';
+  import { sonar } from '../lib/sonidos.js';
   import { usuario, subrayar, memorizar, alternarGuardado, estaGuardado } from '../lib/usuario.svelte.js';
   import { clave } from '../lib/libros.js';
   import { COLORES, etiquetaColor, significado } from '../lib/clave.js';
@@ -22,6 +23,7 @@
 
   function pintar(color) {
     subrayar(clavesSeleccion(), color);
+    sonar(color ? 'check' : 'uncheck');
     if (color && significado(color)) avisar(t('clave.subrayado', { s: significado(color) }));
   }
 
@@ -34,7 +36,9 @@
 
   async function copiar() {
     const texto = `«${textoSeleccion()}» ${etiquetaSeleccion()} (${usuario.ajustes.version})`;
-    avisar((await copiarTexto(texto)) ? t('acc.copiado') : t('acc.noCopiado'));
+    const ok = await copiarTexto(texto);
+    sonar(ok ? 'copy' : 'error');
+    avisar(ok ? t('acc.copiado') : t('acc.noCopiado'));
   }
 
   function aMemoria() {
@@ -49,7 +53,11 @@
     if (a === 'cerrar') ui.seleccion = [];
     else if (a === 'copiar') copiar();
     else if (a === 'memoria') aMemoria();
-    else if (a === 'guardar') avisar(alternarGuardado(clavesSeleccion()) ? t('acc.guardado') : t('acc.guardadoQuitado'));
+    else if (a === 'guardar') {
+      const guardo = alternarGuardado(clavesSeleccion());
+      sonar(guardo ? 'success' : 'uncheck');
+      avisar(guardo ? t('acc.guardado') : t('acc.guardadoQuitado'));
+    }
     else if (a === 'estudiar') abrirPestana(ui.palabra ? 'palabra' : 'original');
     else if (a === 'poster') { ui.lamina = null; ui.dialogo = 'poster'; }
     else abrirPestana(a);
